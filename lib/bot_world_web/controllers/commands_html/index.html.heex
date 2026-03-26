@@ -1,0 +1,41 @@
+<section>
+  <h2 class="text-2xl">sound effects bot world paradise</h2>
+</section>
+<br />
+<h2 class="text-xl">Create Command</h2>
+
+<.simple_form
+  :let={f}
+  for={@changeset}
+  action={~p"/commands"}
+  multipart
+>
+  <.input
+    field={f[:name]}}
+    label="Name"
+    type="text"
+  />
+
+  <.input field={f[:aliases]}    type="text" label="Aliases (comma‑separated)" />
+
+  <.input field={f[:audio_file]} type="file" label="Audio File" />
+
+  <:actions>
+    <.button>Save Command</.button>
+  </:actions>
+</.simple_form>
+
+<hr class="my-6" />
+
+<h2 class="text-xl font-bold mb-4">Uploaded Commands</h2>
+
+<ul class="space-y-2">
+  <%= for command <- @commands do %>
+    <li>
+      <strong><%= command.name %></strong><br />
+      <a href={"http://#{your_s3_host()}/#{command.s3_key}"} class="text-blue-500 hover:underline">
+        Download link
+      </a>
+    </li>
+  <% end %>
+</ul>
