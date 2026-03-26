@@ -59,10 +59,17 @@ defmodule BotWorldWeb.TriggersController do
 
   def delete(conn, %{"id" => id}) do
     trigger = Repo.get!(Trigger, id)
-    {:ok, _trigger} = Repo.delete(trigger)
 
-    conn
-    |> put_flash(:info, "Trigger deleted successfully.")
-    |> redirect(to: ~p"/triggers")
+    case Repo.delete(trigger) do
+      {:ok, _trigger} ->
+        conn
+        |> put_flash(:info, "Trigger deleted successfully.")
+        |> redirect(to: ~p"/triggers")
+
+      {:error, _changeset} ->
+        conn
+        |> put_flash(:error, "Failed to delete trigger.")
+        |> redirect(to: ~p"/triggers")
+    end
   end
 end
