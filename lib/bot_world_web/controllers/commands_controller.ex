@@ -13,12 +13,15 @@ defmodule BotWorldWeb.CommandsController do
   end
 
   def create(conn, %{"command" => command_params}) do
-    # extract file upload from the params
+    # extract file upload from the params (supports both audio and video)
     %Plug.Upload{filename: filename, path: temp_path, content_type: content_type} =
-      command_params["audio_file"]
+      command_params["media_file"]
+
+    media_type = command_params["media_type"] || "audio"
+    prefix = if media_type == "video", do: "video", else: "sfx"
 
     # generate a unique S3 key
-    s3_key = "sfx/#{UUID.uuid4()}_#{filename}"
+    s3_key = "#{prefix}/#{UUID.uuid4()}_#{filename}"
 
     # upload the file to S3
     case BotWorld.S3.upload_file(temp_path, s3_key, content_type) do
@@ -26,7 +29,8 @@ defmodule BotWorldWeb.CommandsController do
         # save the command with the s3_key
         changeset = Command.changeset(%Command{}, %{
           "name" => command_params["name"],
-          "s3_key" => returned_key
+          "s3_key" => returned_key,
+          "media_type" => media_type
         })
 
         case Repo.insert(changeset) do

@@ -1,0 +1,20 @@
+<.header>
+  Triggers
+  <:actions>
+    <.link href={~p"/triggers/new"}>
+      <.button>New Trigger</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="triggers" rows={@triggers}>
+  <:col :let={trigger} label="Name">{trigger.name}</:col>
+  <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
+  <:col :let={trigger} label="Command">{trigger.command.name}</:col>
+  <:action :let={trigger}>
+    <.link href={~p"/triggers/#{trigger}"}>Show</.link>
+  </:action>
+  <:action :let={trigger}>
+    <.link href={~p"/triggers/#{trigger}/edit"}>Edit</.link>
+  </:action>
+</.table>

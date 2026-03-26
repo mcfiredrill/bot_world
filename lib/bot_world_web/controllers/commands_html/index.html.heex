@@ -11,14 +11,21 @@
   multipart
 >
   <.input
-    field={f[:name]}}
+    field={f[:name]}
     label="Name"
     type="text"
   />
 
   <.input field={f[:aliases]}    type="text" label="Aliases (comma‑separated)" />
 
-  <.input field={f[:audio_file]} type="file" label="Audio File" />
+  <.input
+    field={f[:media_type]}
+    type="select"
+    label="Media Type"
+    options={[{"Audio", "audio"}, {"Video", "video"}]}
+  />
+
+  <.input field={f[:media_file]} type="file" label="Media File" />
 
   <:actions>
     <.button>Save Command</.button>
@@ -32,9 +39,14 @@
 <ul class="space-y-2">
   <%= for command <- @commands do %>
     <li>
-      <strong><%= command.name %></strong><br />
+      <strong><%= command.name %></strong>
+      <span class="text-xs text-zinc-500">(<%= command.media_type %>)</span><br />
       <a href={"http://#{your_s3_host()}/#{command.s3_key}"} class="text-blue-500 hover:underline">
         Download link
+      </a>
+      ·
+      <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">
+        Show
       </a>
     </li>
   <% end %>

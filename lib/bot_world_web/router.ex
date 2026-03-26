@@ -1,6 +1,8 @@
 defmodule BotWorldWeb.Router do
   use BotWorldWeb, :router
 
+  import BotWorldWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -8,6 +10,7 @@ defmodule BotWorldWeb.Router do
     plug :put_root_layout, html: {BotWorldWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_user
   end
 
   pipeline :api do
@@ -18,9 +21,33 @@ defmodule BotWorldWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+  end
+
+  ## Authentication routes
+
+  scope "/", BotWorldWeb do
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
+
+    get "/users/register", UserRegistrationController, :new
+    post "/users/register", UserRegistrationController, :create
+    get "/users/log_in", UserSessionController, :new
+    post "/users/log_in", UserSessionController, :create
+  end
+
+  scope "/", BotWorldWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
     get "/commands", CommandsController, :index
     get "/commands/:command", CommandsController, :show
     post "/commands", CommandsController, :create
+
+    resources "/triggers", TriggersController
+  end
+
+  scope "/", BotWorldWeb do
+    pipe_through [:browser]
+
+    delete "/users/log_out", UserSessionController, :delete
   end
 
   # Other scopes may use custom stacks.
