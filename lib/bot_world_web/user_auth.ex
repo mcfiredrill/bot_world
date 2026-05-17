@@ -28,14 +28,23 @@ defmodule BotWorldWeb.UserAuth do
   disconnected on log out.
   """
   def log_in_user(conn, user, params \\ %{}) do
-    token = Accounts.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
+
+    conn
+    |> log_in_user_session(user, params)
+    |> redirect(to: user_return_to || signed_in_path(conn))
+  end
+
+  @doc """
+  Logs the user in without issuing a redirect.
+  """
+  def log_in_user_session(conn, user, params \\ %{}) do
+    token = Accounts.generate_user_session_token(user)
 
     conn
     |> renew_session()
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
@@ -65,6 +74,15 @@ defmodule BotWorldWeb.UserAuth do
   It clears all session data for safety. See renew_session.
   """
   def log_out_user(conn) do
+    conn
+    |> log_out_user_session()
+    |> redirect(to: ~p"/")
+  end
+
+  @doc """
+  Logs the user out without issuing a redirect.
+  """
+  def log_out_user_session(conn) do
     user_token = get_session(conn, :user_token)
     user_token && Accounts.delete_user_session_token(user_token)
 
@@ -75,7 +93,6 @@ defmodule BotWorldWeb.UserAuth do
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
-    |> redirect(to: ~p"/")
   end
 
   @doc """
@@ -201,6 +218,34 @@ defmodule BotWorldWeb.UserAuth do
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
       |> redirect(to: ~p"/users/log_in")
+      |> halt()
+    end
+  end
+
+  @doc """
+  Used for JSON routes that require the user to not be authenticated.
+  """
+  def redirect_if_user_is_authenticated_api(conn, _opts) do
+    if conn.assigns[:current_user] do
+      conn
+      |> put_status(:conflict)
+      |> json(%{errors: %{detail: "Already authenticated."}})
+      |> halt()
+    else
+      conn
+    end
+  end
+
+  @doc """
+  Used for JSON routes that require the user to be authenticated.
+  """
+  def require_authenticated_api_user(conn, _opts) do
+    if conn.assigns[:current_user] do
+      conn
+    else
+      conn
+      |> put_status(:unauthorized)
+      |> json(%{errors: %{detail: "Authentication required."}})
       |> halt()
     end
   end

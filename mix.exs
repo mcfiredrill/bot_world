@@ -64,7 +64,8 @@ defmodule BotWorld.MixProject do
       {:ex_aws_s3, "~> 2.0"},
       {:poison, "~> 3.0"},
       {:hackney, "~> 1.9"},
-      {:sweet_xml, "~> 0.7"}, # optional dependency
+      # optional dependency
+      {:sweet_xml, "~> 0.7"}
     ]
   end
 

@@ -1,9 +1,9 @@
 defmodule BotWorldWeb.CommandsJSON do
   def index(%{commands: commands}) do
-    %{commands: Enum.map(commands, &command_json/1)}
+    %{commands: Enum.map(commands, &command/1)}
   end
 
-  defp command_json(command) do
+  def command(command) do
     %{
       id: command.id,
       name: command.name,
@@ -15,6 +15,7 @@ defmodule BotWorldWeb.CommandsJSON do
   end
 
   defp s3_url_for(key) do
-    "http://localhost:9000/bot-world/#{key}" # customize this if needed
+    # customize this if needed
+    "http://localhost:9000/bot-world/#{key}"
   end
 end

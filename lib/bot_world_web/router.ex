@@ -17,6 +17,11 @@ defmodule BotWorldWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :api_session do
+    plug :fetch_session
+    plug :fetch_current_user
+  end
+
   scope "/", BotWorldWeb do
     pipe_through :browser
 
@@ -55,6 +60,25 @@ defmodule BotWorldWeb.Router do
     pipe_through :api
 
     get "/commands", CommandsController, :index
+  end
+
+  scope "/api", BotWorldWeb do
+    pipe_through [:api, :api_session, :redirect_if_user_is_authenticated_api]
+
+    post "/users/register", UserRegistrationAPIController, :create
+    post "/users/log_in", UserSessionAPIController, :create
+  end
+
+  scope "/api", BotWorldWeb do
+    pipe_through [:api, :api_session]
+
+    delete "/users/log_out", UserSessionAPIController, :delete
+  end
+
+  scope "/api", BotWorldWeb do
+    pipe_through [:api, :api_session, :require_authenticated_api_user]
+
+    resources "/triggers", TriggersAPIController, except: [:new, :edit]
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

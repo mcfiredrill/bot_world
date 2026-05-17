@@ -11,7 +11,12 @@ defmodule BotWorldWeb.TriggersController do
   def new(conn, _params) do
     changeset = Trigger.changeset(%Trigger{}, %{})
     commands = Repo.all(Command)
-    render(conn, :new, changeset: changeset, commands: commands, trigger_types: Trigger.trigger_types())
+
+    render(conn, :new,
+      changeset: changeset,
+      commands: commands,
+      trigger_types: Trigger.trigger_types()
+    )
   end
 
   def create(conn, %{"trigger" => trigger_params}) do
@@ -25,7 +30,12 @@ defmodule BotWorldWeb.TriggersController do
 
       {:error, changeset} ->
         commands = Repo.all(Command)
-        render(conn, :new, changeset: changeset, commands: commands, trigger_types: Trigger.trigger_types())
+
+        render(conn, :new,
+          changeset: changeset,
+          commands: commands,
+          trigger_types: Trigger.trigger_types()
+        )
     end
   end
 
@@ -38,7 +48,13 @@ defmodule BotWorldWeb.TriggersController do
     trigger = Repo.get!(Trigger, id)
     changeset = Trigger.changeset(trigger, %{})
     commands = Repo.all(Command)
-    render(conn, :edit, trigger: trigger, changeset: changeset, commands: commands, trigger_types: Trigger.trigger_types())
+
+    render(conn, :edit,
+      trigger: trigger,
+      changeset: changeset,
+      commands: commands,
+      trigger_types: Trigger.trigger_types()
+    )
   end
 
   def update(conn, %{"id" => id, "trigger" => trigger_params}) do
@@ -53,7 +69,13 @@ defmodule BotWorldWeb.TriggersController do
 
       {:error, changeset} ->
         commands = Repo.all(Command)
-        render(conn, :edit, trigger: trigger, changeset: changeset, commands: commands, trigger_types: Trigger.trigger_types())
+
+        render(conn, :edit,
+          trigger: trigger,
+          changeset: changeset,
+          commands: commands,
+          trigger_types: Trigger.trigger_types()
+        )
     end
   end
 

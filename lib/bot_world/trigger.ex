@@ -10,7 +10,7 @@ defmodule BotWorld.Trigger do
     timestamps(type: :utc_datetime)
   end
 
-  @trigger_types ~w(twitch_point_redeem twitch_bits twitch_follow twitch_subscribe)
+  @trigger_types ~w(twitch_point_redeem twitch_bits twitch_follow twitch_subscribe chat_command)
 
   def trigger_types, do: @trigger_types
 
@@ -18,8 +18,20 @@ defmodule BotWorld.Trigger do
   def changeset(trigger, attrs) do
     trigger
     |> cast(attrs, [:name, :type, :command_id])
-    |> validate_required([:name, :type, :command_id])
-    |> validate_inclusion(:type, @trigger_types)
+    |> validate_trigger_fields()
+    |> validate_required([:command_id])
     |> foreign_key_constraint(:command_id)
+  end
+
+  def command_changeset(trigger, attrs) do
+    trigger
+    |> cast(attrs, [:name, :type])
+    |> validate_trigger_fields()
+  end
+
+  defp validate_trigger_fields(changeset) do
+    changeset
+    |> validate_required([:name, :type])
+    |> validate_inclusion(:type, @trigger_types)
   end
 end
