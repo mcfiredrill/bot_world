@@ -78,4 +78,9 @@ defmodule BotWorldWeb.ConnCase do
     |> Phoenix.ConnTest.init_test_session(%{})
     |> Plug.Conn.put_session(:user_token, token)
   end
+
+  def authenticate_api_user(conn, user) do
+    token = BotWorldWeb.UserAuth.generate_user_api_token(user)
+    Plug.Conn.put_req_header(conn, "authorization", "Bearer #{token}")
+  end
 end

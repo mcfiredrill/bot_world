@@ -46,7 +46,10 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
   end
 
   describe "GET /api/triggers" do
-    setup :register_and_log_in_user
+    setup %{conn: conn} do
+      user = register_user()
+      %{conn: authenticate_api_user(conn, user), user: user}
+    end
 
     test "lists triggers and shows nested command data", %{conn: conn} do
       command = command_fixture()
@@ -76,7 +79,10 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
   end
 
   describe "trigger lifecycle" do
-    setup :register_and_log_in_user
+    setup %{conn: conn} do
+      user = register_user()
+      %{conn: authenticate_api_user(conn, user), user: user}
+    end
 
     test "creates, shows, updates, and deletes triggers", %{conn: conn} do
       command = command_fixture()
@@ -104,11 +110,12 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
       assert command_id == command.id
       assert get_resp_header(create_conn, "location") == ["/api/triggers/#{trigger_id}"]
 
+      [authorization] = get_req_header(create_conn, "authorization")
+
       show_conn =
         build_conn()
-        |> init_test_session(%{})
-        |> put_session(:user_token, get_session(create_conn, :user_token))
         |> json_conn()
+        |> put_req_header("authorization", authorization)
         |> get(~p"/api/triggers/#{trigger_id}")
 
       assert %{"trigger" => %{"id" => ^trigger_id, "command" => %{"id" => ^command_id}}} =
@@ -116,9 +123,8 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
 
       update_conn =
         build_conn()
-        |> init_test_session(%{})
-        |> put_session(:user_token, get_session(create_conn, :user_token))
         |> json_conn()
+        |> put_req_header("authorization", authorization)
         |> put(~p"/api/triggers/#{trigger_id}", %{
           trigger: %{name: "Updated follow trigger", type: "twitch_subscribe"}
         })
@@ -133,9 +139,8 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
 
       delete_conn =
         build_conn()
-        |> init_test_session(%{})
-        |> put_session(:user_token, get_session(create_conn, :user_token))
         |> json_conn()
+        |> put_req_header("authorization", authorization)
         |> delete(~p"/api/triggers/#{trigger_id}")
 
       assert response(delete_conn, :no_content)

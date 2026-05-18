@@ -8,6 +8,7 @@ defmodule BotWorldWeb.UserAuth do
   import Phoenix.Controller
 
   alias BotWorld.Accounts
+  alias BotWorldWeb.UserJWT
 
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
@@ -47,6 +48,15 @@ defmodule BotWorldWeb.UserAuth do
     |> maybe_write_remember_me_cookie(token, params)
   end
 
+  @doc """
+  Issues a JWT-backed API token for the user.
+  """
+  def generate_user_api_token(user) do
+    user
+    |> Accounts.generate_user_session_token()
+    |> UserJWT.sign()
+  end
+
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
     put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
   end
@@ -83,7 +93,7 @@ defmodule BotWorldWeb.UserAuth do
   Logs the user out without issuing a redirect.
   """
   def log_out_user_session(conn) do
-    user_token = get_session(conn, :user_token)
+    {user_token, conn} = ensure_user_token(conn)
     user_token && Accounts.delete_user_session_token(user_token)
 
     if live_socket_id = get_session(conn, :live_socket_id) do
@@ -114,9 +124,30 @@ defmodule BotWorldWeb.UserAuth do
       if token = conn.cookies[@remember_me_cookie] do
         {token, put_token_in_session(conn, token)}
       else
-        {nil, conn}
+        if token = bearer_session_token(conn) do
+          {token, conn}
+        else
+          {nil, conn}
+        end
       end
     end
+  end
+
+  defp bearer_session_token(conn) do
+    conn
+    |> get_req_header("authorization")
+    |> Enum.find_value(fn header ->
+      case String.split(header, " ", parts: 2) do
+        [scheme, token] when scheme in ["Bearer", "bearer"] ->
+          case UserJWT.verify(token) do
+            {:ok, session_token} -> session_token
+            :error -> nil
+          end
+
+        _ ->
+          nil
+      end
+    end)
   end
 
   @doc """
@@ -196,9 +227,16 @@ defmodule BotWorldWeb.UserAuth do
   """
   def redirect_if_user_is_authenticated(conn, _opts) do
     if conn.assigns[:current_user] do
-      conn
-      |> redirect(to: signed_in_path(conn))
-      |> halt()
+      if get_format(conn) == "json" do
+        conn
+        |> put_status(:conflict)
+        |> json(%{errors: %{detail: "Already authenticated."}})
+        |> halt()
+      else
+        conn
+        |> redirect(to: signed_in_path(conn))
+        |> halt()
+      end
     else
       conn
     end

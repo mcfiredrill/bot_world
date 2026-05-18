@@ -13,6 +13,16 @@ defmodule BotWorldWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :browser_auth do
+    plug :accepts, ["html", "json"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {BotWorldWeb.Layouts, :root}
+    plug BotWorldWeb.Plugs.ProtectFromForgeryForHtml
+    plug :put_secure_browser_headers
+    plug :fetch_current_user
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -36,6 +46,11 @@ defmodule BotWorldWeb.Router do
     get "/users/register", UserRegistrationController, :new
     post "/users/register", UserRegistrationController, :create
     get "/users/log_in", UserSessionController, :new
+  end
+
+  scope "/", BotWorldWeb do
+    pipe_through [:browser_auth, :redirect_if_user_is_authenticated]
+
     post "/users/log_in", UserSessionController, :create
   end
 

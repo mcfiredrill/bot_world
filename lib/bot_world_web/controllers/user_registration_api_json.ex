@@ -1,5 +1,5 @@
 defmodule BotWorldWeb.UserRegistrationAPIJSON do
-  def show(%{user: user}) do
-    %{user: BotWorldWeb.UserJSON.data(user)}
+  def show(%{user: user, token: token}) do
+    %{user: BotWorldWeb.UserJSON.data(user), token: token}
   end
 end

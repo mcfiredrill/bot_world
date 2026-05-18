@@ -2,7 +2,6 @@ defmodule BotWorld.Accounts.UserToken do
   use Ecto.Schema
   import Ecto.Query
 
-  @hash_algorithm :sha256
   @rand_size 32
 
   # It is very important to keep the session token expiry short,
@@ -77,4 +76,6 @@ defmodule BotWorld.Accounts.UserToken do
     from t in BotWorld.Accounts.UserToken,
       where: t.user_id == ^user.id and t.context in ^contexts
   end
+
+  def session_validity_in_days, do: @session_validity_in_days
 end

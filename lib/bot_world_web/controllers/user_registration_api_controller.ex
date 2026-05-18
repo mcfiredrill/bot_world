@@ -8,10 +8,11 @@ defmodule BotWorldWeb.UserRegistrationAPIController do
   def create(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
+        token = UserAuth.generate_user_api_token(user)
+
         conn
-        |> UserAuth.log_in_user_session(user)
         |> put_status(:created)
-        |> render(:show, user: user)
+        |> render(:show, user: user, token: token)
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn

@@ -4,12 +4,13 @@ defmodule BotWorldWeb.UserSessionAPIController do
   alias BotWorld.Accounts
   alias BotWorldWeb.UserAuth
 
-  def create(conn, %{"user" => %{"email" => email, "password" => password} = user_params}) do
+  def create(conn, %{"user" => %{"email" => email, "password" => password}}) do
     if user = Accounts.get_user_by_email_and_password(email, password) do
+      token = UserAuth.generate_user_api_token(user)
+
       conn
-      |> UserAuth.log_in_user_session(user, user_params)
       |> put_status(:created)
-      |> render(:show, user: user)
+      |> render(:show, user: user, token: token)
     else
       conn
       |> put_status(:unauthorized)
