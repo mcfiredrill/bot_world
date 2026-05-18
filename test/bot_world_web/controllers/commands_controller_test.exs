@@ -38,11 +38,11 @@ defmodule BotWorldWeb.CommandsControllerTest do
              "data" => [
                %{
                  "id" => id,
-                 "type" => "commands",
+                 "type" => "command",
                  "attributes" => %{
                    "name" => "airhorn",
-                   "s3_key" => "sfx/airhorn.mp3",
-                   "media_type" => "audio"
+                   "s3-key" => "sfx/airhorn.mp3",
+                   "media-type" => "audio"
                  }
                }
              ]

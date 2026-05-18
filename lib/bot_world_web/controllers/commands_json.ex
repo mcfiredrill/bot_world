@@ -17,15 +17,15 @@ defmodule BotWorldWeb.CommandsJSON do
   defp resource_object(command) do
     %{
       id: to_string(command.id),
-      type: "commands",
+      type: "command",
       attributes: %{
         name: command.name,
         aliases: command.aliases,
-        s3_key: command.s3_key,
+        "s3-key": command.s3_key,
         url: s3_url_for(command.s3_key),
-        media_type: command.media_type,
-        inserted_at: command.inserted_at,
-        updated_at: command.updated_at
+        "media-type": command.media_type,
+        "inserted-at": command.inserted_at,
+        "updated-at": command.updated_at
       }
     }
   end
