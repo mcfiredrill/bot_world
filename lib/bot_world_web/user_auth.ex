@@ -252,11 +252,18 @@ defmodule BotWorldWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
-      conn
-      |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
-      |> halt()
+      if get_format(conn) == "json" do
+        conn
+        |> put_status(:unauthorized)
+        |> json(%{errors: [%{detail: "Authentication required."}]})
+        |> halt()
+      else
+        conn
+        |> put_flash(:error, "You must log in to access this page.")
+        |> maybe_store_return_to()
+        |> redirect(to: ~p"/users/log_in")
+        |> halt()
+      end
     end
   end
 

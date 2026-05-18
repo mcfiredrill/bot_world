@@ -1,6 +1,6 @@
 defmodule BotWorldWeb.CommandsJSON do
   def index(%{commands: commands}) do
-    %{commands: Enum.map(commands, &command/1)}
+    %{data: Enum.map(commands, &resource_object/1)}
   end
 
   def command(command) do
@@ -11,6 +11,22 @@ defmodule BotWorldWeb.CommandsJSON do
       url: s3_url_for(command.s3_key),
       inserted_at: command.inserted_at,
       updated_at: command.updated_at
+    }
+  end
+
+  defp resource_object(command) do
+    %{
+      id: to_string(command.id),
+      type: "commands",
+      attributes: %{
+        name: command.name,
+        aliases: command.aliases,
+        s3_key: command.s3_key,
+        url: s3_url_for(command.s3_key),
+        media_type: command.media_type,
+        inserted_at: command.inserted_at,
+        updated_at: command.updated_at
+      }
     }
   end
 

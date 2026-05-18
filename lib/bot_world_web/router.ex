@@ -55,9 +55,14 @@ defmodule BotWorldWeb.Router do
   end
 
   scope "/", BotWorldWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser_auth, :require_authenticated_user]
 
     get "/commands", CommandsController, :index
+  end
+
+  scope "/", BotWorldWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
     get "/commands/:command", CommandsController, :show
     post "/commands", CommandsController, :create
 
