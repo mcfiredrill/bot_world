@@ -66,13 +66,14 @@ defmodule BotWorldWeb.CommandsController do
   defp command_form_changeset(command_params \\ %{}) do
     params = normalize_command_params(command_params)
     trigger_count = max(length(Map.get(params, "triggers", [])), 1)
-    command = %Command{triggers: List.duplicate(%Trigger{}, trigger_count)}
+    command = %Command{triggers: Enum.map(1..trigger_count, fn _ -> %Trigger{} end)}
 
     Command.changeset(command, params)
   end
 
   defp command_for_insert(attrs) do
-    %Command{triggers: List.duplicate(%Trigger{}, length(Map.get(attrs, "triggers", [])))}
+    _trigger_count = length(Map.get(attrs, "triggers", []))
+    %Command{}
   end
 
   defp command_attrs(command_params, s3_key) do
