@@ -98,6 +98,8 @@ defmodule BotWorldWeb.Router do
   scope "/api", BotWorldWeb do
     pipe_through [:api, :api_session, :require_authenticated_api_user]
 
+    post "/commands", CommandsAPIController, :create
+    post "/commands/presign", CommandsAPIController, :presign
     resources "/triggers", TriggersAPIController, except: [:new, :edit]
   end
 

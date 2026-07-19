@@ -60,6 +60,25 @@ defmodule BotWorld.S3Test do
     refute_received :unexpected_bucket_creation
   end
 
+  test "creates a public URL from the configured S3 endpoint" do
+    assert S3.public_url("video/celebration.mp4") ==
+             "http://localhost:9000/bot-world/video/celebration.mp4"
+  end
+
+  test "presigns direct uploads with the content type header" do
+    assert {:ok, upload} = S3.presign_upload("sfx/airhorn.mp3", "audio/mpeg")
+
+    assert %{
+             key: "sfx/airhorn.mp3",
+             method: "PUT",
+             headers: %{"content-type" => "audio/mpeg"},
+             expires_in: 3600
+           } = upload
+
+    assert String.starts_with?(upload.url, "http://localhost:9000/bot-world/sfx/airhorn.mp3?")
+    assert String.contains?(upload.url, "X-Amz-SignedHeaders=content-type%3Bhost")
+  end
+
   defp temp_file_path do
     Path.join(System.tmp_dir!(), "bot-world-s3-test-#{System.unique_integer([:positive])}")
   end

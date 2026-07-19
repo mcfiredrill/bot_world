@@ -1,4 +1,6 @@
 defmodule BotWorldWeb.CommandsJSON do
+  alias BotWorld.S3
+
   def index(%{commands: commands}) do
     %{data: Enum.map(commands, &resource_object/1)}
   end
@@ -8,7 +10,7 @@ defmodule BotWorldWeb.CommandsJSON do
       id: command.id,
       name: command.name,
       s3_key: command.s3_key,
-      url: s3_url_for(command.s3_key),
+      url: S3.public_url(command.s3_key),
       inserted_at: command.inserted_at,
       updated_at: command.updated_at
     }
@@ -22,16 +24,11 @@ defmodule BotWorldWeb.CommandsJSON do
         name: command.name,
         aliases: command.aliases,
         "s3-key": command.s3_key,
-        url: s3_url_for(command.s3_key),
+        url: S3.public_url(command.s3_key),
         "media-type": command.media_type,
         "inserted-at": command.inserted_at,
         "updated-at": command.updated_at
       }
     }
-  end
-
-  defp s3_url_for(key) do
-    # customize this if needed
-    "http://localhost:9000/bot-world/#{key}"
   end
 end

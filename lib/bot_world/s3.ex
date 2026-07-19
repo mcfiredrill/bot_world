@@ -2,6 +2,8 @@ defmodule BotWorld.S3 do
   @bucket "bot-world"
   @region "us-east-1"
 
+  def bucket, do: @bucket
+
   def upload_file(file_path, s3_key, content_type, request_fun \\ &ExAws.request/1) do
     upload = build_upload(file_path, s3_key, content_type)
 
@@ -18,6 +20,39 @@ defmodule BotWorld.S3 do
           {:error, reason}
         end
     end
+  end
+
+  def presign_upload(s3_key, content_type, opts \\ []) do
+    expires_in = Keyword.get(opts, :expires_in, 3600)
+    headers = [{"content-type", content_type}]
+
+    :s3
+    |> ExAws.Config.new()
+    |> ExAws.S3.presigned_url(:put, @bucket, s3_key, expires_in: expires_in, headers: headers)
+    |> case do
+      {:ok, url} ->
+        {:ok,
+         %{
+           key: s3_key,
+           method: "PUT",
+           url: url,
+           headers: %{"content-type" => content_type},
+           expires_in: expires_in
+         }}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def public_url(key) do
+    %URI{
+      scheme: endpoint_scheme(),
+      host: endpoint_host(),
+      port: endpoint_port(),
+      path: "/#{@bucket}/#{key}"
+    }
+    |> URI.to_string()
   end
 
   defp build_upload(file_path, s3_key, content_type) do
@@ -70,4 +105,23 @@ defmodule BotWorld.S3 do
   end
 
   defp error_matches?(_reason, _phrases), do: false
+
+  defp endpoint_scheme do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:scheme, "https://")
+    |> String.trim_trailing("://")
+  end
+
+  defp endpoint_host do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:host, "s3.amazonaws.com")
+  end
+
+  defp endpoint_port do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:port)
+  end
 end

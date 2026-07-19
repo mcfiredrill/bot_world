@@ -1,6 +1,6 @@
 defmodule BotWorldWeb.CommandsController do
   use BotWorldWeb, :controller
-  alias BotWorld.{Command, Repo, Trigger}
+  alias BotWorld.{Command, CommandParams, Repo, Trigger}
   alias BotWorldWeb.TriggersHTML
 
   def index(conn, _params) do
@@ -14,14 +14,12 @@ defmodule BotWorldWeb.CommandsController do
   def create(conn, %{"command" => command_params}) do
     case command_params["media_file"] do
       %Plug.Upload{filename: filename, path: temp_path, content_type: content_type} ->
-        media_type = command_params["media_type"] || "audio"
-        prefix = if media_type == "video", do: "video", else: "sfx"
-        s3_key = "#{prefix}/#{UUID.uuid4()}_#{filename}"
+        s3_key = CommandParams.build_s3_key(command_params["media_type"] || "audio", filename)
 
         case BotWorld.S3.upload_file(temp_path, s3_key, content_type) do
           {:ok, %{body: %{key: returned_key}}} ->
-            attrs = command_attrs(command_params, returned_key)
-            changeset = Command.changeset(command_for_insert(attrs), attrs)
+            attrs = CommandParams.put_s3_key(command_params, returned_key)
+            changeset = Command.changeset(%Command{}, attrs)
 
             case Repo.insert(changeset) do
               {:ok, _command} ->
@@ -64,60 +62,12 @@ defmodule BotWorldWeb.CommandsController do
   end
 
   defp command_form_changeset(command_params \\ %{}) do
-    params = normalize_command_params(command_params)
+    params = CommandParams.normalize(command_params)
     trigger_count = max(length(Map.get(params, "triggers", [])), 1)
     command = %Command{triggers: Enum.map(1..trigger_count, fn _ -> %Trigger{} end)}
 
     Command.changeset(command, params)
   end
-
-  defp command_for_insert(attrs) do
-    _trigger_count = length(Map.get(attrs, "triggers", []))
-    %Command{}
-  end
-
-  defp command_attrs(command_params, s3_key) do
-    command_params
-    |> normalize_command_params()
-    |> Map.put("s3_key", s3_key)
-  end
-
-  defp normalize_command_params(command_params) do
-    command_params
-    |> Map.take(["name", "aliases", "media_type", "triggers"])
-    |> normalize_aliases()
-    |> normalize_triggers()
-  end
-
-  defp normalize_aliases(%{"aliases" => aliases} = params) when is_binary(aliases) do
-    normalized_aliases =
-      aliases
-      |> String.split(",", trim: true)
-      |> Enum.map(&String.trim/1)
-      |> Enum.reject(&(&1 == ""))
-
-    Map.put(params, "aliases", normalized_aliases)
-  end
-
-  defp normalize_aliases(params), do: params
-
-  defp normalize_triggers(%{"triggers" => triggers} = params) when is_map(triggers) do
-    normalized_triggers =
-      triggers
-      |> Enum.sort_by(fn {index, _attrs} -> String.to_integer(index) end)
-      |> Enum.map(fn {_index, attrs} -> attrs end)
-      |> Enum.reject(&blank_trigger?/1)
-
-    Map.put(params, "triggers", normalized_triggers)
-  end
-
-  defp normalize_triggers(params), do: params
-
-  defp blank_trigger?(attrs) do
-    Enum.all?([attrs["name"], attrs["type"]], &blank_value?/1)
-  end
-
-  defp blank_value?(value), do: value in [nil, ""]
 
   defp trigger_form_count(changeset) do
     changeset
