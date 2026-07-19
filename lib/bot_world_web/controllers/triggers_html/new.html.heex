@@ -1,0 +1,35 @@
+<.header>
+  New Trigger
+</.header>
+
+<.simple_form :let={f} for={@changeset} action={~p"/triggers"}>
+  <.error :if={@changeset.action}>
+    Oops, something went wrong! Please check the errors below.
+  </.error>
+
+  <.input field={f[:name]} type="text" label="Name" />
+
+  <.input
+    field={f[:type]}
+    type="select"
+    label="Type"
+    options={Enum.map(@trigger_types, fn t -> {format_trigger_type(t), t} end)}
+    prompt="Choose a trigger type"
+  />
+
+  <.input
+    field={f[:command_id]}
+    type="select"
+    label="Command"
+    options={Enum.map(@commands, fn c -> {c.name, c.id} end)}
+    prompt="Choose a command"
+  />
+
+  <:actions>
+    <.button>Create Trigger</.button>
+  </:actions>
+</.simple_form>
+
+<.link href={~p"/triggers"} class="mt-4 inline-block text-sm text-zinc-600 hover:text-zinc-900">
+  ← Back to triggers
+</.link>

@@ -4,26 +4,139 @@
 <br />
 <h2 class="text-xl">Create Command</h2>
 
-<.simple_form
-  :let={f}
-  for={@changeset}
-  action={~p"/commands"}
-  multipart
->
+<.simple_form :let={f} for={@changeset} action={~p"/commands"} multipart>
+  <.input field={f[:name]} label="Name" type="text" />
+
+  <.input field={f[:aliases]} type="text" label="Aliases (comma‑separated)" />
+
   <.input
-    field={f[:name]}}
-    label="Name"
-    type="text"
+    field={f[:media_type]}
+    type="select"
+    label="Media Type"
+    options={[{"Audio", "audio"}, {"Video", "video"}]}
   />
 
-  <.input field={f[:aliases]}    type="text" label="Aliases (comma‑separated)" />
+  <.input field={f[:media_file]} type="file" label="Media File" />
 
-  <.input field={f[:audio_file]} type="file" label="Audio File" />
+  <div class="space-y-4">
+    <div class="flex items-center justify-between gap-4">
+      <h3 class="text-lg font-semibold text-zinc-900">Triggers</h3>
+      <button
+        type="button"
+        id="add-command-trigger"
+        class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+      >
+        Add Trigger
+      </button>
+    </div>
+
+    <div id="command-trigger-fields" data-next-index={@trigger_form_count} class="space-y-4">
+      <.inputs_for :let={trigger_form} field={f[:triggers]}>
+        <div
+          data-trigger-row
+          class="grid gap-4 rounded-xl border border-zinc-200 p-4 md:grid-cols-[1fr_1fr_auto]"
+        >
+          <.input field={trigger_form[:name]} type="text" label="Trigger Name" />
+
+          <.input
+            field={trigger_form[:type]}
+            type="select"
+            label="Trigger Type"
+            options={@trigger_type_options}
+            prompt="Choose a trigger type"
+          />
+
+          <div class="flex items-end">
+            <button
+              type="button"
+              data-remove-trigger
+              class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </.inputs_for>
+    </div>
+  </div>
 
   <:actions>
     <.button>Save Command</.button>
   </:actions>
 </.simple_form>
+
+<template id="command-trigger-template">
+  <div
+    data-trigger-row
+    class="grid gap-4 rounded-xl border border-zinc-200 p-4 md:grid-cols-[1fr_1fr_auto]"
+  >
+    <div>
+      <.label for="command_triggers___INDEX___name">Trigger Name</.label>
+      <input
+        type="text"
+        name="command[triggers][__INDEX__][name]"
+        id="command_triggers___INDEX___name"
+        class="mt-2 block w-full rounded-lg border-zinc-300 text-zinc-900 focus:border-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
+      />
+    </div>
+
+    <div>
+      <.label for="command_triggers___INDEX___type">Trigger Type</.label>
+      <select
+        name="command[triggers][__INDEX__][type]"
+        id="command_triggers___INDEX___type"
+        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+      >
+        <option value="">Choose a trigger type</option>
+        <%= for {label, value} <- @trigger_type_options do %>
+          <option value={value}>{label}</option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="flex items-end">
+      <button
+        type="button"
+        data-remove-trigger
+        class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+</template>
+
+<script>
+  (() => {
+    const container = document.getElementById("command-trigger-fields");
+    const addButton = document.getElementById("add-command-trigger");
+    const template = document.getElementById("command-trigger-template");
+
+    if (!container || !addButton || !template || addButton.dataset.bound === "true") {
+      return;
+    }
+
+    addButton.dataset.bound = "true";
+
+    addButton.addEventListener("click", () => {
+      const nextIndex = Number(container.dataset.nextIndex || "0");
+      const html = template.innerHTML.replaceAll("__INDEX__", String(nextIndex));
+
+      container.insertAdjacentHTML("beforeend", html);
+      container.dataset.nextIndex = String(nextIndex + 1);
+    });
+
+    container.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-remove-trigger]");
+
+      if (!button) {
+        return;
+      }
+
+      button.closest("[data-trigger-row]")?.remove();
+    });
+  })();
+</script>
 
 <hr class="my-6" />
 
@@ -32,9 +145,15 @@
 <ul class="space-y-2">
   <%= for command <- @commands do %>
     <li>
-      <strong><%= command.name %></strong><br />
+      <strong>{command.name}</strong>
+      <span class="text-xs text-zinc-500">({command.media_type})</span>
+      <br />
       <a href={"http://#{your_s3_host()}/#{command.s3_key}"} class="text-blue-500 hover:underline">
         Download link
+      </a>
+      ·
+      <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">
+        Show
       </a>
     </li>
   <% end %>

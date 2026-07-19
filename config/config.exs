@@ -7,6 +7,14 @@
 # General application configuration
 import Config
 
+config :mime, :types, %{
+  "application/vnd.api+json" => ["json"]
+}
+
+config :mime, :extensions, %{
+  "json" => "application/json"
+}
+
 config :bot_world,
   ecto_repos: [BotWorld.Repo],
   generators: [timestamp_type: :utc_datetime]

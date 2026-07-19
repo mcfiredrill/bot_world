@@ -1,0 +1,18 @@
+<.header>
+  Trigger: {@trigger.name}
+  <:actions>
+    <.link href={~p"/triggers/#{@trigger}/edit"}>
+      <.button>Edit trigger</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@trigger.name}</:item>
+  <:item title="Type">{format_trigger_type(@trigger.type)}</:item>
+  <:item title="Command">{@trigger.command.name}</:item>
+</.list>
+
+<.link href={~p"/triggers"} class="mt-4 inline-block text-sm text-zinc-600 hover:text-zinc-900">
+  ← Back to triggers
+</.link>

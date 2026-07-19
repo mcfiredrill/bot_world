@@ -93,4 +93,3 @@ config :ex_aws,
     host: "localhost",
     port: 9000
   ]
-

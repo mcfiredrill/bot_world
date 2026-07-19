@@ -58,12 +58,15 @@ defmodule BotWorld.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
+      {:bcrypt_elixir, "~> 3.0"},
       {:uuid, "~> 1.1"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
       {:poison, "~> 3.0"},
       {:hackney, "~> 1.9"},
-      {:sweet_xml, "~> 0.7"}, # optional dependency
+      # optional dependency
+      {:sweet_xml, "~> 0.7"},
+      {:cors_plug, "~> 3.0"}
     ]
   end
 
