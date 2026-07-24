@@ -7,7 +7,12 @@ defmodule BotWorldWeb.CommandsController do
     render_index(conn, command_form_changeset())
   end
 
-  def show(conn, %{"command" => command}) do
+  def show(conn, %{"command" => id}) do
+    command =
+      Command
+      |> Repo.get!(id)
+      |> Repo.preload(:triggers)
+
     render(conn, :show, command: command)
   end
 

@@ -16,6 +16,7 @@ defmodule BotWorld.Application do
       {Finch, name: BotWorld.Finch},
       # Start a worker by calling: BotWorld.Worker.start_link(arg)
       # {BotWorld.Worker, arg},
+      BotWorld.Twitch.ClientSupervisor,
       # Start to serve requests, typically the last entry
       BotWorldWeb.Endpoint
     ]
@@ -23,7 +24,11 @@ defmodule BotWorld.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: BotWorld.Supervisor]
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+
+    BotWorld.Twitch.maybe_connect_event_sub()
+
+    result
   end
 
   # Tell Phoenix to update the endpoint configuration

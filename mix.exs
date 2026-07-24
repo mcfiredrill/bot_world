@@ -62,6 +62,7 @@ defmodule BotWorld.MixProject do
       {:uuid, "~> 1.1"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
+      {:websockex, "~> 0.4.3"},
       {:poison, "~> 3.0"},
       {:hackney, "~> 1.9"},
       # optional dependency

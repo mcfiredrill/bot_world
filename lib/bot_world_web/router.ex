@@ -27,6 +27,15 @@ defmodule BotWorldWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :overlay do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {BotWorldWeb.Layouts, :overlay}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
   pipeline :api_session do
     plug :fetch_session
     plug :fetch_current_user
@@ -67,12 +76,21 @@ defmodule BotWorldWeb.Router do
     post "/commands", CommandsController, :create
 
     resources "/triggers", TriggersController
+
+    get "/auth/twitch", TwitchAuthController, :new
+    get "/auth/twitch/callback", TwitchAuthController, :callback
   end
 
   scope "/", BotWorldWeb do
     pipe_through [:browser]
 
     delete "/users/log_out", UserSessionController, :delete
+  end
+
+  scope "/overlay", BotWorldWeb do
+    pipe_through :overlay
+
+    live "/:token", OverlayLive, :show
   end
 
   # Other scopes may use custom stacks.

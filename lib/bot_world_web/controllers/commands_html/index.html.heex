@@ -1,6 +1,17 @@
 <section>
   <h2 class="text-2xl">sound effects bot world paradise</h2>
 </section>
+
+<%= if BotWorld.Twitch.get_credential() do %>
+  <p class="text-sm text-zinc-500">
+    Twitch account connected (@{BotWorld.Twitch.get_credential().twitch_login}).
+  </p>
+<% else %>
+  <a href={~p"/auth/twitch"} class="text-blue-500 hover:underline">
+    Connect Twitch account
+  </a>
+<% end %>
+
 <br />
 <h2 class="text-xl">Create Command</h2>
 

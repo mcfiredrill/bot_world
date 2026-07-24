@@ -40,7 +40,7 @@ defmodule BotWorld.Accounts.User do
   defp validate_password(changeset, _opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
+    |> validate_length(:password, min: 7, max: 72)
     |> hash_password()
   end
 

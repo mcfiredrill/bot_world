@@ -64,14 +64,34 @@ defmodule BotWorld.S3 do
   defp ensure_bucket_exists(request_fun) do
     case request_fun.(ExAws.S3.put_bucket(@bucket, @region)) do
       {:ok, _result} ->
-        :ok
+        ensure_public_read_policy(request_fun)
 
       {:error, reason} ->
         if bucket_already_exists?(reason) do
-          :ok
+          ensure_public_read_policy(request_fun)
         else
           {:error, reason}
         end
+    end
+  end
+
+  def ensure_public_read_policy(request_fun \\ &ExAws.request/1) do
+    policy =
+      Jason.encode!(%{
+        "Version" => "2012-10-17",
+        "Statement" => [
+          %{
+            "Effect" => "Allow",
+            "Principal" => "*",
+            "Action" => ["s3:GetObject"],
+            "Resource" => ["arn:aws:s3:::#{@bucket}/*"]
+          }
+        ]
+      })
+
+    case request_fun.(ExAws.S3.put_bucket_policy(@bucket, policy)) do
+      {:ok, _result} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 

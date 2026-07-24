@@ -115,3 +115,18 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+twitch_client_id = System.get_env("TWITCH_CLIENT_ID")
+twitch_client_secret = System.get_env("TWITCH_CLIENT_SECRET")
+
+twitch_redirect_uri =
+  System.get_env("TWITCH_REDIRECT_URI") || "http://localhost:4004/auth/twitch/callback"
+
+config :bot_world, :twitch,
+  enabled:
+    config_env() != :test and not is_nil(twitch_client_id) and not is_nil(twitch_client_secret),
+  client_id: twitch_client_id,
+  client_secret: twitch_client_secret,
+  redirect_uri: twitch_redirect_uri
+
+config :bot_world, :overlay, token: System.get_env("OVERLAY_TOKEN") || "dev-overlay-token"
