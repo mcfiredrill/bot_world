@@ -65,6 +65,7 @@ defmodule BotWorld.Twitch.EventSubClient do
          },
          state
        ) do
+    Logger.info("Twitch EventSub notification: #{subscription_type} #{inspect(event)}")
     Commands.dispatch_event(subscription_type, event)
     {:ok, state}
   end

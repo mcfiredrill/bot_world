@@ -4,6 +4,7 @@ export const Hooks = {
       this.mediaEl = null
 
       this.handleEvent("play_command", payload => {
+        console.log("got play_command event: ", payload);
         const tag = payload.media_type === "video" ? "video" : "audio"
 
         if (!this.mediaEl || this.mediaEl.tagName.toLowerCase() !== tag) {

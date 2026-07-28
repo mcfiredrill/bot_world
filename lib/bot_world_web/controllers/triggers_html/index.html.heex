@@ -10,6 +10,7 @@
 <.table id="triggers" rows={@triggers}>
   <:col :let={trigger} label="Name">{trigger.name}</:col>
   <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
+  <:col :let={trigger} label="Matches">{format_trigger_match(trigger)}</:col>
   <:col :let={trigger} label="Command">{trigger.command.name}</:col>
   <:action :let={trigger}>
     <.link href={~p"/triggers/#{trigger}"}>Show</.link>

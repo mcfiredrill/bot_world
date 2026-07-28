@@ -29,7 +29,9 @@
         <li>
           <strong>{trigger.name}</strong>
           <span class="text-xs text-zinc-500">
-            ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)})
+            ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
+              trigger
+            )})
           </span>
         </li>
       <% end %>

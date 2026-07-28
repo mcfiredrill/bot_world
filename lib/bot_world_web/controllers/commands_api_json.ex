@@ -28,6 +28,8 @@ defmodule BotWorldWeb.CommandsAPIJSON do
       id: trigger.id,
       name: trigger.name,
       type: trigger.type,
+      reward_name: trigger.reward_name,
+      bits_amount: trigger.bits_amount,
       command_id: trigger.command_id,
       inserted_at: trigger.inserted_at,
       updated_at: trigger.updated_at

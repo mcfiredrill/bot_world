@@ -15,7 +15,26 @@
     label="Type"
     options={Enum.map(@trigger_types, fn t -> {format_trigger_type(t), t} end)}
     prompt="Choose a trigger type"
+    data-trigger-type-select=""
   />
+
+  <div data-trigger-field="twitch_point_redeem">
+    <.input
+      field={f[:reward_name]}
+      type="text"
+      label="Reward Name"
+      placeholder="e.g. Hydrate (matches any redeem if left blank)"
+    />
+  </div>
+
+  <div data-trigger-field="twitch_bits">
+    <.input
+      field={f[:bits_amount]}
+      type="number"
+      label="Bits Amount"
+      placeholder="e.g. 100 (matches any cheer amount if left blank)"
+    />
+  </div>
 
   <.input
     field={f[:command_id]}
@@ -33,3 +52,20 @@
 <.link href={~p"/triggers"} class="mt-4 inline-block text-sm text-zinc-600 hover:text-zinc-900">
   ← Back to triggers
 </.link>
+
+<script>
+  (() => {
+    const select = document.querySelector("[data-trigger-type-select]");
+    if (!select || select.dataset.bound === "true") return;
+    select.dataset.bound = "true";
+
+    const update = () => {
+      document.querySelectorAll("[data-trigger-field]").forEach((el) => {
+        el.style.display = el.dataset.triggerField === select.value ? "" : "none";
+      });
+    };
+
+    select.addEventListener("change", update);
+    update();
+  })();
+</script>

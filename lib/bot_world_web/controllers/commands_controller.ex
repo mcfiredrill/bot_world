@@ -56,9 +56,12 @@ defmodule BotWorldWeb.CommandsController do
       changeset: changeset,
       commands: Repo.all(Command),
       trigger_type_options: trigger_type_options(),
-      trigger_form_count: trigger_form_count(changeset)
+      trigger_form_count: trigger_form_count(changeset),
+      overlay_token: overlay_token()
     )
   end
+
+  defp overlay_token, do: Application.get_env(:bot_world, :overlay, [])[:token]
 
   defp trigger_type_options do
     Enum.map(Trigger.trigger_types(), fn type ->

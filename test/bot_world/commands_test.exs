@@ -76,5 +76,118 @@ defmodule BotWorld.CommandsTest do
 
       refute_receive {:play_command, _}
     end
+
+    test "matches a twitch_point_redeem trigger by reward name (case-insensitive)" do
+      insert_command(%{
+        "name" => "hydrate",
+        "s3_key" => "sfx/hydrate.mp3",
+        "media_type" => "audio",
+        "triggers" => [
+          %{"name" => "Hydrate redeem", "type" => "twitch_point_redeem", "reward_name" => "Hydrate"}
+        ]
+      })
+
+      insert_command(%{
+        "name" => "confetti",
+        "s3_key" => "sfx/confetti.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "Any redeem", "type" => "twitch_point_redeem"}]
+      })
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+
+      assert :ok =
+               Commands.dispatch_event("channel.channel_points_custom_reward_redemption.add", %{
+                 "reward" => %{"title" => "hydrate"}
+               })
+
+      assert_receive {:play_command, %{name: "hydrate"}}
+    end
+
+    test "falls back to a catch-all twitch_point_redeem trigger when no reward name matches" do
+      insert_command(%{
+        "name" => "hydrate",
+        "s3_key" => "sfx/hydrate.mp3",
+        "media_type" => "audio",
+        "triggers" => [
+          %{"name" => "Hydrate redeem", "type" => "twitch_point_redeem", "reward_name" => "Hydrate"}
+        ]
+      })
+
+      insert_command(%{
+        "name" => "confetti",
+        "s3_key" => "sfx/confetti.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "Any redeem", "type" => "twitch_point_redeem"}]
+      })
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+
+      assert :ok =
+               Commands.dispatch_event("channel.channel_points_custom_reward_redemption.add", %{
+                 "reward" => %{"title" => "Confetti Cannon"}
+               })
+
+      assert_receive {:play_command, %{name: "confetti"}}
+    end
+
+    test "matches a twitch_bits trigger by exact bits amount" do
+      insert_command(%{
+        "name" => "hundred-bits",
+        "s3_key" => "sfx/hundred-bits.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "100 bits", "type" => "twitch_bits", "bits_amount" => "100"}]
+      })
+
+      insert_command(%{
+        "name" => "any-bits",
+        "s3_key" => "sfx/any-bits.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "Any bits", "type" => "twitch_bits"}]
+      })
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+
+      assert :ok = Commands.dispatch_event("channel.cheer", %{"bits" => 100})
+
+      assert_receive {:play_command, %{name: "hundred-bits"}}
+    end
+
+    test "falls back to a catch-all twitch_bits trigger when the exact amount doesn't match" do
+      insert_command(%{
+        "name" => "hundred-bits",
+        "s3_key" => "sfx/hundred-bits.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "100 bits", "type" => "twitch_bits", "bits_amount" => "100"}]
+      })
+
+      insert_command(%{
+        "name" => "any-bits",
+        "s3_key" => "sfx/any-bits.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "Any bits", "type" => "twitch_bits"}]
+      })
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+
+      assert :ok = Commands.dispatch_event("channel.cheer", %{"bits" => 250})
+
+      assert_receive {:play_command, %{name: "any-bits"}}
+    end
+
+    test "does nothing when bits amount doesn't match and there is no catch-all trigger" do
+      insert_command(%{
+        "name" => "hundred-bits",
+        "s3_key" => "sfx/hundred-bits.mp3",
+        "media_type" => "audio",
+        "triggers" => [%{"name" => "100 bits", "type" => "twitch_bits", "bits_amount" => "100"}]
+      })
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+
+      assert :ok = Commands.dispatch_event("channel.cheer", %{"bits" => 250})
+
+      refute_receive {:play_command, _}
+    end
   end
 end
