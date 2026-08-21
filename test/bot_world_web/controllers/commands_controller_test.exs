@@ -19,6 +19,55 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert body =~ ~s(name="command[triggers][0][type]")
   end
 
+  test "GET /commands shows trigger matching details in the commands table", %{conn: conn} do
+    {:ok, _command} =
+      %Command{}
+      |> Command.changeset(%{
+        "name" => "hydrate-sound",
+        "s3_key" => "sfx/hydrate.mp3",
+        "media_type" => "audio",
+        "triggers" => [
+          %{
+            "name" => "Hydrate redeem",
+            "type" => "twitch_point_redeem",
+            "reward_name" => "Hydrate"
+          }
+        ]
+      })
+      |> Repo.insert()
+
+    body = conn |> get(~p"/commands") |> html_response(200)
+
+    assert body =~ "Hydrate redeem"
+    assert body =~ "Twitch Point Redeem"
+    assert body =~ "Reward: Hydrate"
+  end
+
+  test "GET /commands/:command links to the editor for a linked redeem trigger", %{conn: conn} do
+    {:ok, command} =
+      %Command{}
+      |> Command.changeset(%{
+        "name" => "hydrate-sound",
+        "s3_key" => "sfx/hydrate.mp3",
+        "media_type" => "audio",
+        "triggers" => [
+          %{
+            "name" => "Hydrate redeem",
+            "type" => "twitch_point_redeem",
+            "reward_name" => "Hydrate"
+          }
+        ]
+      })
+      |> Repo.insert()
+
+    trigger = command |> Repo.preload(:triggers) |> Map.fetch!(:triggers) |> List.first()
+    body = conn |> get(~p"/commands/#{command}") |> html_response(200)
+
+    assert body =~ "Reward: Hydrate"
+    assert body =~ ~s(href="/triggers/#{trigger.id}/edit")
+    assert body =~ "Edit trigger"
+  end
+
   test "GET /commands returns JSON for a JSON:API accept header", %{conn: conn} do
     {:ok, command} =
       %Command{}

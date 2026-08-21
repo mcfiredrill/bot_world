@@ -1,5 +1,21 @@
 # BotWorld
 
+## run minio:
+
+```
+  mkdir -p /tmp/bot-world-minio
+
+  MINIO_ROOT_USER=minioadmin \
+  MINIO_ROOT_PASSWORD=minioadmin \
+  minio server /tmp/bot-world-minio --console-address ":9001"
+```
+
+  Then use:
+
+- S3 endpoint: http://localhost:9000
+- Admin console: http://localhost:9001
+- Login: minioadmin / minioadmin
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies

@@ -54,7 +54,7 @@ defmodule BotWorldWeb.CommandsController do
   defp render_index(conn, changeset) do
     render(conn, :index,
       changeset: changeset,
-      commands: Repo.all(Command),
+      commands: Command |> Repo.all() |> Repo.preload(:triggers),
       trigger_type_options: trigger_type_options(),
       trigger_form_count: trigger_form_count(changeset),
       overlay_token: overlay_token()

@@ -224,19 +224,45 @@
 
 <h2 class="text-xl font-bold mb-4">Uploaded Commands</h2>
 
-<ul class="space-y-2">
-  <%= for command <- @commands do %>
-    <li>
-      <strong>{command.name}</strong>
-      <span class="text-xs text-zinc-500">({command.media_type})</span>
-      <br />
-      <a href={"http://#{your_s3_host()}/#{command.s3_key}"} class="text-blue-500 hover:underline">
-        Download link
-      </a>
-      ·
-      <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">
-        Show
-      </a>
-    </li>
-  <% end %>
-</ul>
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-sm">
+    <thead class="border-b border-zinc-200 text-zinc-600">
+      <tr>
+        <th class="px-3 py-2 font-semibold">Command</th>
+        <th class="px-3 py-2 font-semibold">Media</th>
+        <th class="px-3 py-2 font-semibold">Triggers</th>
+        <th class="px-3 py-2 font-semibold">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-zinc-100">
+      <%= for command <- @commands do %>
+        <tr>
+          <td class="px-3 py-3 font-semibold">{command.name}</td>
+          <td class="px-3 py-3">
+            <span class="text-xs text-zinc-500">{command.media_type}</span>
+          </td>
+          <td class="px-3 py-3">
+            <span :if={command.triggers == []} class="text-zinc-400">None</span>
+            <ul :if={command.triggers != []} class="space-y-1">
+              <li :for={trigger <- command.triggers}>
+                <span class="font-medium">{trigger.name}</span>
+                <span class="text-zinc-500">
+                  · {trigger_type(trigger)} · {trigger_match(trigger)}
+                </span>
+              </li>
+            </ul>
+          </td>
+          <td class="px-3 py-3 whitespace-nowrap">
+            <a
+              href={"http://#{your_s3_host()}/#{command.s3_key}"}
+              class="text-blue-500 hover:underline"
+            >
+              Download
+            </a>
+            · <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">Show</a>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

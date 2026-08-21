@@ -26,13 +26,18 @@
     <h3 class="text-sm font-semibold text-zinc-700">Triggers</h3>
     <ul class="space-y-1">
       <%= for trigger <- @command.triggers do %>
-        <li>
-          <strong>{trigger.name}</strong>
-          <span class="text-xs text-zinc-500">
-            ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
-              trigger
-            )})
-          </span>
+        <li class="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 px-3 py-2">
+          <div>
+            <strong>{trigger.name}</strong>
+            <span class="text-xs text-zinc-500">
+              ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
+                trigger
+              )})
+            </span>
+          </div>
+          <a href={~p"/triggers/#{trigger}/edit"} class="text-sm text-blue-500 hover:underline">
+            Edit trigger
+          </a>
         </li>
       <% end %>
     </ul>
