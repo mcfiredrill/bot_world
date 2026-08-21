@@ -51,6 +51,22 @@ defmodule BotWorldWeb.CommandsController do
     end
   end
 
+  def delete(conn, %{"command" => id}) do
+    command = Repo.get!(Command, id)
+
+    case Repo.delete(command) do
+      {:ok, _command} ->
+        conn
+        |> put_flash(:info, "Command deleted successfully.")
+        |> redirect(to: ~p"/commands")
+
+      {:error, _changeset} ->
+        conn
+        |> put_flash(:error, "Failed to delete command.")
+        |> redirect(to: ~p"/commands/#{command}")
+    end
+  end
+
   defp render_index(conn, changeset) do
     render(conn, :index,
       changeset: changeset,

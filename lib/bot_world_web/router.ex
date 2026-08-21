@@ -69,6 +69,7 @@ defmodule BotWorldWeb.Router do
 
     get "/commands/:command", CommandsController, :show
     post "/commands", CommandsController, :create
+    delete "/commands/:command", CommandsController, :delete
 
     resources "/triggers", TriggersController
 

@@ -68,6 +68,32 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert body =~ "Edit trigger"
   end
 
+  test "DELETE /commands/:command deletes the command and its linked triggers", %{conn: conn} do
+    {:ok, command} =
+      %Command{}
+      |> Command.changeset(%{
+        "name" => "hydrate-sound",
+        "s3_key" => "sfx/hydrate.mp3",
+        "media_type" => "audio",
+        "triggers" => [
+          %{
+            "name" => "Hydrate redeem",
+            "type" => "twitch_point_redeem",
+            "reward_name" => "Hydrate"
+          }
+        ]
+      })
+      |> Repo.insert()
+
+    trigger_id = command |> Repo.preload(:triggers) |> Map.fetch!(:triggers) |> List.first() |> Map.fetch!(:id)
+
+    conn = delete(conn, ~p"/commands/#{command}")
+
+    assert redirected_to(conn) == ~p"/commands"
+    assert Repo.get(Command, command.id) == nil
+    assert Repo.get(BotWorld.Trigger, trigger_id) == nil
+  end
+
   test "GET /commands returns JSON for a JSON:API accept header", %{conn: conn} do
     {:ok, command} =
       %Command{}

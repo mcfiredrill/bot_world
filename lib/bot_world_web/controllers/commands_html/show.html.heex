@@ -45,5 +45,14 @@
 
   <div>
     <a href={~p"/commands"} class="text-blue-500 hover:underline">Back to commands</a>
+    ·
+    <.link
+      href={~p"/commands/#{@command}"}
+      method="delete"
+      data-confirm={"Delete #{@command.name}? This also deletes its linked triggers."}
+      class="text-red-600 hover:underline"
+    >
+      Delete command
+    </.link>
   </div>
 </section>

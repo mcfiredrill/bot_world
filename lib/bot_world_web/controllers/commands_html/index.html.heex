@@ -260,6 +260,15 @@
               Download
             </a>
             · <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">Show</a>
+            ·
+            <.link
+              href={~p"/commands/#{command}"}
+              method="delete"
+              data-confirm={"Delete #{command.name}? This also deletes its linked triggers."}
+              class="text-red-600 hover:underline"
+            >
+              Delete
+            </.link>
           </td>
         </tr>
       <% end %>

@@ -12,6 +12,12 @@ export const Hooks = {
           this.mediaEl = document.createElement(tag)
           this.mediaEl.autoplay = true
           this.mediaEl.playsInline = true
+          this.mediaEl.addEventListener("ended", event => {
+            if (this.mediaEl === event.currentTarget) {
+              this.mediaEl.remove()
+              this.mediaEl = null
+            }
+          })
           this.el.appendChild(this.mediaEl)
         }
 
