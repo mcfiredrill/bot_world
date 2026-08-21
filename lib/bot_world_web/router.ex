@@ -41,12 +41,6 @@ defmodule BotWorldWeb.Router do
     plug :fetch_current_user
   end
 
-  scope "/", BotWorldWeb do
-    pipe_through :browser
-
-    get "/", PageController, :home
-  end
-
   ## Authentication routes
 
   scope "/", BotWorldWeb do
@@ -66,6 +60,7 @@ defmodule BotWorldWeb.Router do
   scope "/", BotWorldWeb do
     pipe_through [:browser_auth, :require_authenticated_user]
 
+    get "/", CommandsController, :index
     get "/commands", CommandsController, :index
   end
 

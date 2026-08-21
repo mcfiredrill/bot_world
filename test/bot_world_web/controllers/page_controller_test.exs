@@ -1,8 +1,13 @@
 defmodule BotWorldWeb.PageControllerTest do
   use BotWorldWeb.ConnCase
 
-  test "GET /", %{conn: conn} do
+  setup :register_and_log_in_user
+
+  test "GET / renders the commands index", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+    body = html_response(conn, 200)
+
+    assert body =~ "Create Command"
+    assert body =~ "Uploaded Commands"
   end
 end
