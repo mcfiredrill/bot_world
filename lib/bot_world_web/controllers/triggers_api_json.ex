@@ -16,13 +16,20 @@ defmodule BotWorldWeb.TriggersAPIJSON do
       type: trigger.type,
       reward_name: trigger.reward_name,
       bits_amount: trigger.bits_amount,
-      command_id: trigger.command_id,
-      command: command_data(trigger),
+      media_group_id: trigger.media_group_id,
+      media_group: media_group_data(trigger),
       inserted_at: trigger.inserted_at,
       updated_at: trigger.updated_at
     }
   end
 
-  defp command_data(%{command: %_{} = command}), do: CommandsJSON.command(command)
-  defp command_data(_trigger), do: nil
+  defp media_group_data(%{media_group: %_{} = media_group}) do
+    %{
+      id: media_group.id,
+      name: media_group.name,
+      commands: Enum.map(media_group.commands, &CommandsJSON.command/1)
+    }
+  end
+
+  defp media_group_data(_trigger), do: nil
 end

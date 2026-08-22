@@ -1,11 +1,10 @@
 defmodule BotWorld.CommandParams do
-  @allowed_fields ~w(name aliases media_type s3_key triggers)
+  @allowed_fields ~w(name aliases media_type s3_key)
 
   def normalize(command_params) do
     command_params
     |> Map.take(@allowed_fields)
     |> normalize_aliases()
-    |> normalize_triggers()
   end
 
   def put_s3_key(command_params, s3_key) do
@@ -30,22 +29,4 @@ defmodule BotWorld.CommandParams do
   end
 
   defp normalize_aliases(params), do: params
-
-  defp normalize_triggers(%{"triggers" => triggers} = params) when is_map(triggers) do
-    normalized_triggers =
-      triggers
-      |> Enum.sort_by(fn {index, _attrs} -> String.to_integer(index) end)
-      |> Enum.map(fn {_index, attrs} -> attrs end)
-      |> Enum.reject(&blank_trigger?/1)
-
-    Map.put(params, "triggers", normalized_triggers)
-  end
-
-  defp normalize_triggers(params), do: params
-
-  defp blank_trigger?(attrs) do
-    Enum.all?([attrs["name"], attrs["type"]], &blank_value?/1)
-  end
-
-  defp blank_value?(value), do: value in [nil, ""]
 end

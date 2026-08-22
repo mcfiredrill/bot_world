@@ -1,20 +1,20 @@
 defmodule BotWorldWeb.TriggersController do
   use BotWorldWeb, :controller
-  alias BotWorld.{Trigger, Command, Repo}
+  alias BotWorld.{Commands, MediaGroup, Repo, Trigger}
   import Ecto.Query
 
   def index(conn, _params) do
-    triggers = Repo.all(from t in Trigger, preload: [:command])
+    triggers = Repo.all(from t in Trigger, preload: [media_group: :commands])
     render(conn, :index, triggers: triggers)
   end
 
   def new(conn, _params) do
     changeset = Trigger.changeset(%Trigger{}, %{})
-    commands = Repo.all(Command)
+    media_groups = media_groups()
 
     render(conn, :new,
       changeset: changeset,
-      commands: commands,
+      media_groups: media_groups,
       trigger_types: Trigger.trigger_types()
     )
   end
@@ -29,30 +29,30 @@ defmodule BotWorldWeb.TriggersController do
         |> redirect(to: ~p"/triggers")
 
       {:error, changeset} ->
-        commands = Repo.all(Command)
+        media_groups = media_groups()
 
         render(conn, :new,
           changeset: changeset,
-          commands: commands,
+          media_groups: media_groups,
           trigger_types: Trigger.trigger_types()
         )
     end
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Repo.get!(Trigger, id) |> Repo.preload(:command)
+    trigger = Repo.get!(Trigger, id) |> Repo.preload(media_group: :commands)
     render(conn, :show, trigger: trigger)
   end
 
   def edit(conn, %{"id" => id}) do
     trigger = Repo.get!(Trigger, id)
     changeset = Trigger.changeset(trigger, %{})
-    commands = Repo.all(Command)
+    media_groups = media_groups()
 
     render(conn, :edit,
       trigger: trigger,
       changeset: changeset,
-      commands: commands,
+      media_groups: media_groups,
       trigger_types: Trigger.trigger_types()
     )
   end
@@ -68,12 +68,12 @@ defmodule BotWorldWeb.TriggersController do
         |> redirect(to: ~p"/triggers/#{trigger}")
 
       {:error, changeset} ->
-        commands = Repo.all(Command)
+        media_groups = media_groups()
 
         render(conn, :edit,
           trigger: trigger,
           changeset: changeset,
-          commands: commands,
+          media_groups: media_groups,
           trigger_types: Trigger.trigger_types()
         )
     end
@@ -93,5 +93,31 @@ defmodule BotWorldWeb.TriggersController do
         |> put_flash(:error, "Failed to delete trigger.")
         |> redirect(to: ~p"/triggers")
     end
+  end
+
+  def test_bits(conn, %{"test_bits" => %{"bits" => bits}}) do
+    case Integer.parse(to_string(bits)) do
+      {amount, ""} when amount >= 0 ->
+        Commands.dispatch_event("channel.cheer", %{"bits" => amount})
+
+        conn
+        |> put_flash(:info, "Simulated a #{amount}-bit cheer.")
+        |> redirect(to: ~p"/triggers")
+
+      _invalid ->
+        invalid_bits(conn)
+    end
+  end
+
+  def test_bits(conn, _params), do: invalid_bits(conn)
+
+  defp invalid_bits(conn) do
+    conn
+    |> put_flash(:error, "Bits must be a non-negative whole number.")
+    |> redirect(to: ~p"/triggers")
+  end
+
+  defp media_groups do
+    Repo.all(from g in MediaGroup, order_by: g.name)
   end
 end

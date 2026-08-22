@@ -22,22 +22,37 @@
     <% end %>
   </div>
 
-  <div :if={@command.triggers != []}>
-    <h3 class="text-sm font-semibold text-zinc-700">Triggers</h3>
+  <div :if={@command.media_groups != []}>
+    <h3 class="text-sm font-semibold text-zinc-700">Media Groups and Triggers</h3>
     <ul class="space-y-1">
-      <%= for trigger <- @command.triggers do %>
-        <li class="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 px-3 py-2">
-          <div>
-            <strong>{trigger.name}</strong>
-            <span class="text-xs text-zinc-500">
-              ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
-                trigger
-              )})
-            </span>
+      <%= for group <- @command.media_groups do %>
+        <li class="rounded-lg border border-zinc-200 px-3 py-2">
+          <div class="flex items-center justify-between gap-4">
+            <.link href={~p"/groups/#{group}"} class="font-semibold text-blue-500 hover:underline">
+              {group.name}
+            </.link>
+            <.link href={~p"/groups/#{group}/edit"} class="text-sm text-blue-500 hover:underline">
+              Edit group
+            </.link>
           </div>
-          <a href={~p"/triggers/#{trigger}/edit"} class="text-sm text-blue-500 hover:underline">
-            Edit trigger
-          </a>
+          <ul :if={group.triggers != []} class="mt-2 space-y-1">
+            <li :for={trigger <- group.triggers} class="flex items-center justify-between gap-4">
+              <span class="text-sm">
+                {trigger.name}
+                <span class="text-xs text-zinc-500">
+                  ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
+                    trigger
+                  )})
+                </span>
+              </span>
+              <.link
+                href={~p"/triggers/#{trigger}/edit"}
+                class="text-sm text-blue-500 hover:underline"
+              >
+                Edit trigger
+              </.link>
+            </li>
+          </ul>
         </li>
       <% end %>
     </ul>
@@ -49,7 +64,7 @@
     <.link
       href={~p"/commands/#{@command}"}
       method="delete"
-      data-confirm={"Delete #{@command.name}? This also deletes its linked triggers."}
+      data-confirm={"Delete #{@command.name}? This removes it from all media groups."}
       class="text-red-600 hover:underline"
     >
       Delete command

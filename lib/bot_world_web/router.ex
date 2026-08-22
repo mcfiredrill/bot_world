@@ -71,7 +71,9 @@ defmodule BotWorldWeb.Router do
     post "/commands", CommandsController, :create
     delete "/commands/:command", CommandsController, :delete
 
+    post "/triggers/test/bits", TriggersController, :test_bits
     resources "/triggers", TriggersController
+    resources "/groups", MediaGroupsController
 
     get "/auth/twitch", TwitchAuthController, :new
     get "/auth/twitch/callback", TwitchAuthController, :callback

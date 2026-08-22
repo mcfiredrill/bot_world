@@ -1,12 +1,28 @@
 defmodule BotWorld.CommandsTest do
   use BotWorld.DataCase, async: false
 
-  alias BotWorld.{Command, Commands}
+  alias BotWorld.{Command, Commands, MediaGroup, Trigger}
 
   defp insert_command(attrs) do
-    %Command{}
-    |> Command.changeset(attrs)
-    |> Repo.insert!()
+    {trigger_attrs, attrs} = Map.pop(attrs, "triggers", [])
+    command = %Command{} |> Command.changeset(attrs) |> Repo.insert!()
+
+    if trigger_attrs != [] do
+      group =
+        %MediaGroup{name: "#{command.name} group"}
+        |> Repo.preload(:commands)
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:commands, [command])
+        |> Repo.insert!()
+
+      Enum.each(trigger_attrs, fn attrs ->
+        %Trigger{}
+        |> Trigger.changeset(Map.put(attrs, "media_group_id", group.id))
+        |> Repo.insert!()
+      end)
+    end
+
+    command
   end
 
   describe "trigger_type_for_eventsub_type/1" do
@@ -41,6 +57,34 @@ defmodule BotWorld.CommandsTest do
 
     test "returns an error when no command matches" do
       assert {:error, :no_command} = Commands.random_command_for_trigger_type("twitch_bits")
+    end
+
+    test "randomly selects among all clips in the trigger's media group" do
+      first = insert_command(%{"name" => "first", "s3_key" => "sfx/first.mp3"})
+      second = insert_command(%{"name" => "second", "s3_key" => "sfx/second.mp3"})
+
+      group =
+        %MediaGroup{name: "Random group"}
+        |> Repo.preload(:commands)
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:commands, [first, second])
+        |> Repo.insert!()
+
+      %Trigger{}
+      |> Trigger.changeset(%{
+        "name" => "Follow",
+        "type" => "twitch_follow",
+        "media_group_id" => group.id
+      })
+      |> Repo.insert!()
+
+      selected_ids =
+        for _ <- 1..40, into: MapSet.new() do
+          {:ok, command} = Commands.random_command_for_trigger_type("twitch_follow")
+          command.id
+        end
+
+      assert selected_ids == MapSet.new([first.id, second.id])
     end
   end
 
@@ -83,7 +127,11 @@ defmodule BotWorld.CommandsTest do
         "s3_key" => "sfx/hydrate.mp3",
         "media_type" => "audio",
         "triggers" => [
-          %{"name" => "Hydrate redeem", "type" => "twitch_point_redeem", "reward_name" => "Hydrate"}
+          %{
+            "name" => "Hydrate redeem",
+            "type" => "twitch_point_redeem",
+            "reward_name" => "Hydrate"
+          }
         ]
       })
 
@@ -110,7 +158,11 @@ defmodule BotWorld.CommandsTest do
         "s3_key" => "sfx/hydrate.mp3",
         "media_type" => "audio",
         "triggers" => [
-          %{"name" => "Hydrate redeem", "type" => "twitch_point_redeem", "reward_name" => "Hydrate"}
+          %{
+            "name" => "Hydrate redeem",
+            "type" => "twitch_point_redeem",
+            "reward_name" => "Hydrate"
+          }
         ]
       })
 

@@ -1,0 +1,16 @@
+<.header>
+  Media Groups
+  <:actions>
+    <.link href={~p"/groups/new"}>
+      <.button>New Media Group</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="media-groups" rows={@media_groups}>
+  <:col :let={group} label="Name">{group.name}</:col>
+  <:col :let={group} label="Clips">{length(group.commands)}</:col>
+  <:col :let={group} label="Triggers">{length(group.triggers)}</:col>
+  <:action :let={group}><.link href={~p"/groups/#{group}"}>Show</.link></:action>
+  <:action :let={group}><.link href={~p"/groups/#{group}/edit"}>Edit</.link></:action>
+</.table>

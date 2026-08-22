@@ -37,11 +37,11 @@
   </div>
 
   <.input
-    field={f[:command_id]}
+    field={f[:media_group_id]}
     type="select"
-    label="Command"
-    options={Enum.map(@commands, fn c -> {c.name, c.id} end)}
-    prompt="Choose a command"
+    label="Media Group"
+    options={Enum.map(@media_groups, fn group -> {group.name, group.id} end)}
+    prompt="Choose a media group"
   />
 
   <:actions>

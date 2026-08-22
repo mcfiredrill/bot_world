@@ -6,7 +6,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   import Ecto.Query
 
   def index(conn, _params) do
-    triggers = Repo.all(from t in Trigger, preload: [:command])
+    triggers = Repo.all(from t in Trigger, preload: [media_group: :commands])
     render(conn, :index, triggers: triggers)
   end
 
@@ -15,7 +15,7 @@ defmodule BotWorldWeb.TriggersAPIController do
          |> Trigger.changeset(trigger_params)
          |> Repo.insert() do
       {:ok, trigger} ->
-        trigger = Repo.preload(trigger, :command)
+        trigger = Repo.preload(trigger, media_group: :commands)
 
         conn
         |> put_status(:created)
@@ -38,7 +38,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Repo.get!(Trigger, id) |> Repo.preload(:command)
+    trigger = Repo.get!(Trigger, id) |> Repo.preload(media_group: :commands)
     render(conn, :show, trigger: trigger)
   end
 
@@ -49,7 +49,7 @@ defmodule BotWorldWeb.TriggersAPIController do
          |> Trigger.changeset(trigger_params)
          |> Repo.update() do
       {:ok, trigger} ->
-        render(conn, :show, trigger: Repo.preload(trigger, :command))
+        render(conn, :show, trigger: Repo.preload(trigger, media_group: :commands))
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn

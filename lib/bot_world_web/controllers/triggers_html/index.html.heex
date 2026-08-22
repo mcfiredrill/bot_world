@@ -7,11 +7,29 @@
   </:actions>
 </.header>
 
+<section class="mb-8 rounded-xl border border-zinc-200 p-4">
+  <h2 class="text-lg font-semibold">Test a Bits Trigger</h2>
+  <p class="mt-1 text-sm text-zinc-500">
+    Simulates a Twitch cheer and plays a matching group's random clip in the open overlay.
+  </p>
+  <.form
+    :let={f}
+    for={%{}}
+    as={:test_bits}
+    action={~p"/triggers/test/bits"}
+    class="mt-4 flex items-end gap-3"
+  >
+    <.input field={f[:bits]} type="number" min="0" step="1" label="Bits Amount" value="100" />
+    <.button>Send Test Bits</.button>
+  </.form>
+</section>
+
 <.table id="triggers" rows={@triggers}>
   <:col :let={trigger} label="Name">{trigger.name}</:col>
   <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
   <:col :let={trigger} label="Matches">{format_trigger_match(trigger)}</:col>
-  <:col :let={trigger} label="Command">{trigger.command.name}</:col>
+  <:col :let={trigger} label="Media Group">{trigger.media_group.name}</:col>
+  <:col :let={trigger} label="Clips">{length(trigger.media_group.commands)}</:col>
   <:action :let={trigger}>
     <.link href={~p"/triggers/#{trigger}"}>Show</.link>
   </:action>

@@ -1,7 +1,7 @@
 defmodule BotWorldWeb.TriggersAPIControllerTest do
   use BotWorldWeb.ConnCase, async: true
 
-  alias BotWorld.{Command, Repo, Trigger}
+  alias BotWorld.{Command, MediaGroup, Repo, Trigger}
 
   defp json_conn(conn) do
     put_req_header(conn, "accept", "application/json")
@@ -21,16 +21,26 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
   end
 
   defp trigger_fixture(command) do
+    group = group_fixture(command)
+
     {:ok, trigger} =
       %Trigger{}
       |> Trigger.changeset(%{
         name: "Bits trigger",
         type: "twitch_bits",
-        command_id: command.id
+        media_group_id: group.id
       })
       |> Repo.insert()
 
-    Repo.preload(trigger, :command)
+    Repo.preload(trigger, media_group: :commands)
+  end
+
+  defp group_fixture(command) do
+    %MediaGroup{name: "#{command.name} group"}
+    |> Repo.preload(:commands)
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_assoc(:commands, [command])
+    |> Repo.insert!()
   end
 
   describe "authentication" do
@@ -51,7 +61,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "lists triggers and shows nested command data", %{conn: conn} do
+    test "lists triggers and shows nested media group data", %{conn: conn} do
       command = command_fixture()
       trigger = trigger_fixture(command)
 
@@ -66,14 +76,18 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
                    "id" => id,
                    "name" => "Bits trigger",
                    "type" => "twitch_bits",
-                   "command_id" => command_id,
-                   "command" => %{"id" => nested_command_id, "name" => "applause"}
+                   "media_group_id" => group_id,
+                   "media_group" => %{
+                     "id" => nested_group_id,
+                     "commands" => [%{"id" => nested_command_id, "name" => "applause"}]
+                   }
                  }
                ]
              } = json_response(conn, :ok)
 
       assert id == trigger.id
-      assert command_id == command.id
+      assert group_id == trigger.media_group_id
+      assert nested_group_id == trigger.media_group_id
       assert nested_command_id == command.id
     end
   end
@@ -86,6 +100,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
 
     test "creates, shows, updates, and deletes triggers", %{conn: conn} do
       command = command_fixture()
+      group = group_fixture(command)
 
       create_conn =
         conn
@@ -94,7 +109,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
           trigger: %{
             name: "Follow trigger",
             type: "twitch_follow",
-            command_id: command.id
+            media_group_id: group.id
           }
         })
 
@@ -103,11 +118,11 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
                  "id" => trigger_id,
                  "name" => "Follow trigger",
                  "type" => "twitch_follow",
-                 "command_id" => command_id
+                 "media_group_id" => group_id
                }
              } = json_response(create_conn, :created)
 
-      assert command_id == command.id
+      assert group_id == group.id
       assert get_resp_header(create_conn, "location") == ["/api/triggers/#{trigger_id}"]
 
       [authorization] = get_req_header(create_conn, "authorization")
@@ -118,7 +133,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
         |> put_req_header("authorization", authorization)
         |> get(~p"/api/triggers/#{trigger_id}")
 
-      assert %{"trigger" => %{"id" => ^trigger_id, "command" => %{"id" => ^command_id}}} =
+      assert %{"trigger" => %{"id" => ^trigger_id, "media_group" => %{"id" => ^group_id}}} =
                json_response(show_conn, :ok)
 
       update_conn =
@@ -157,7 +172,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
                "errors" => %{
                  "name" => [_ | _],
                  "type" => [_ | _],
-                 "command_id" => [_ | _]
+                 "media_group_id" => [_ | _]
                }
              } = json_response(conn, :unprocessable_entity)
     end

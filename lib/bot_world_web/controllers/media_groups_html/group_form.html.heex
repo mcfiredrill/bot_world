@@ -1,0 +1,40 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.error :if={@changeset.action}>Please fix the errors below.</.error>
+
+  <.input field={f[:name]} type="text" label="Name" />
+
+  <fieldset>
+    <legend class="text-sm font-semibold text-zinc-800">Media Clips</legend>
+    <p class="mb-3 text-xs text-zinc-500">
+      One clip is selected randomly whenever this group is triggered.
+    </p>
+    <p
+      :for={{message, _} <- Keyword.get_values(@changeset.errors, :commands)}
+      class="text-sm text-red-600"
+    >
+      {message}
+    </p>
+    <div class="space-y-2">
+      <label
+        :for={command <- @commands}
+        class="flex items-center gap-3 rounded-lg border border-zinc-200 p-3"
+      >
+        <input
+          type="checkbox"
+          name="media_group[command_ids][]"
+          value={command.id}
+          checked={command.id in @selected_command_ids}
+          class="rounded border-zinc-300"
+        />
+        <span>
+          <span class="font-medium">{command.name}</span>
+          <span class="ml-2 text-xs text-zinc-500">{command.media_type}</span>
+        </span>
+      </label>
+    </div>
+  </fieldset>
+
+  <:actions>
+    <.button>Save Media Group</.button>
+  </:actions>
+</.simple_form>

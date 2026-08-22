@@ -37,11 +37,11 @@
   </div>
 
   <.input
-    field={f[:command_id]}
+    field={f[:media_group_id]}
     type="select"
-    label="Command"
-    options={Enum.map(@commands, fn c -> {c.name, c.id} end)}
-    prompt="Choose a command"
+    label="Media Group"
+    options={Enum.map(@media_groups, fn group -> {group.name, group.id} end)}
+    prompt="Choose a media group"
   />
 
   <:actions>
@@ -49,9 +49,14 @@
   </:actions>
 </.simple_form>
 
-<.link href={~p"/triggers"} class="mt-4 inline-block text-sm text-zinc-600 hover:text-zinc-900">
-  ← Back to triggers
-</.link>
+<div class="mt-4 flex gap-4 text-sm">
+  <.link href={~p"/triggers"} class="text-zinc-600 hover:text-zinc-900">
+    ← Back to triggers
+  </.link>
+  <.link href={~p"/groups/#{@trigger.media_group_id}/edit"} class="text-blue-500 hover:underline">
+    Edit media group
+  </.link>
+</div>
 
 <script>
   (() => {

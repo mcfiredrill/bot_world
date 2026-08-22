@@ -1,0 +1,12 @@
+<.header>Edit Media Group: {@media_group.name}</.header>
+
+<.group_form
+  changeset={@changeset}
+  action={~p"/groups/#{@media_group}"}
+  commands={@commands}
+  selected_command_ids={@selected_command_ids}
+/>
+
+<.link href={~p"/groups/#{@media_group}"} class="mt-4 inline-block text-zinc-600">
+  ← Back to group
+</.link>

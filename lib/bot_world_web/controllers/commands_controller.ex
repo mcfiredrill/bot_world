@@ -1,7 +1,6 @@
 defmodule BotWorldWeb.CommandsController do
   use BotWorldWeb, :controller
-  alias BotWorld.{Command, CommandParams, Repo, Trigger}
-  alias BotWorldWeb.TriggersHTML
+  alias BotWorld.{Command, CommandParams, Repo}
 
   def index(conn, _params) do
     render_index(conn, command_form_changeset())
@@ -11,7 +10,7 @@ defmodule BotWorldWeb.CommandsController do
     command =
       Command
       |> Repo.get!(id)
-      |> Repo.preload(:triggers)
+      |> Repo.preload(media_groups: :triggers)
 
     render(conn, :show, command: command)
   end
@@ -52,8 +51,21 @@ defmodule BotWorldWeb.CommandsController do
   end
 
   def delete(conn, %{"command" => id}) do
-    command = Repo.get!(Command, id)
+    command = Command |> Repo.get!(id) |> Repo.preload(media_groups: [:commands, :triggers])
 
+    if Enum.any?(command.media_groups, &(length(&1.commands) == 1 and &1.triggers != [])) do
+      conn
+      |> put_flash(
+        :error,
+        "Remove this clip's triggers or add another clip to its groups before deleting it."
+      )
+      |> redirect(to: ~p"/commands/#{command}")
+    else
+      delete_command(conn, command)
+    end
+  end
+
+  defp delete_command(conn, command) do
     case Repo.delete(command) do
       {:ok, _command} ->
         conn
@@ -70,33 +82,15 @@ defmodule BotWorldWeb.CommandsController do
   defp render_index(conn, changeset) do
     render(conn, :index,
       changeset: changeset,
-      commands: Command |> Repo.all() |> Repo.preload(:triggers),
-      trigger_type_options: trigger_type_options(),
-      trigger_form_count: trigger_form_count(changeset),
+      commands: Command |> Repo.all() |> Repo.preload(media_groups: :triggers),
       overlay_token: overlay_token()
     )
   end
 
   defp overlay_token, do: Application.get_env(:bot_world, :overlay, [])[:token]
 
-  defp trigger_type_options do
-    Enum.map(Trigger.trigger_types(), fn type ->
-      {TriggersHTML.format_trigger_type(type), type}
-    end)
-  end
-
   defp command_form_changeset(command_params \\ %{}) do
     params = CommandParams.normalize(command_params)
-    trigger_count = max(length(Map.get(params, "triggers", [])), 1)
-    command = %Command{triggers: Enum.map(1..trigger_count, fn _ -> %Trigger{} end)}
-
-    Command.changeset(command, params)
-  end
-
-  defp trigger_form_count(changeset) do
-    changeset
-    |> Ecto.Changeset.get_field(:triggers, [])
-    |> length()
-    |> max(1)
+    Command.changeset(%Command{}, params)
   end
 end

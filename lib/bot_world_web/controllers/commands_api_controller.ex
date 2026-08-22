@@ -15,7 +15,7 @@ defmodule BotWorldWeb.CommandsAPIController do
       {:ok, command} ->
         conn
         |> put_status(:created)
-        |> render(:show, command: Repo.preload(command, :triggers))
+        |> render(:show, command: command)
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn

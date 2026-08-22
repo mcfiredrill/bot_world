@@ -39,7 +39,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "creates a command from JSON and nested triggers", %{conn: conn} do
+    test "creates a command from JSON", %{conn: conn} do
       conn =
         conn
         |> json_conn()
@@ -48,11 +48,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
             name: "airhorn",
             aliases: ["horn", "loud"],
             s3_key: "sfx/airhorn.mp3",
-            media_type: "audio",
-            triggers: [
-              %{name: "Chat trigger", type: "chat_command"},
-              %{name: "Follow trigger", type: "twitch_follow"}
-            ]
+            media_type: "audio"
           }
         })
 
@@ -62,17 +58,12 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
                  "name" => "airhorn",
                  "aliases" => ["horn", "loud"],
                  "s3_key" => "sfx/airhorn.mp3",
-                 "media_type" => "audio",
-                 "triggers" => [
-                   %{"name" => "Chat trigger", "type" => "chat_command"},
-                   %{"name" => "Follow trigger", "type" => "twitch_follow"}
-                 ]
+                 "media_type" => "audio"
                }
              } = json_response(conn, :created)
 
-      command = Repo.get!(Command, id) |> Repo.preload(:triggers)
+      command = Repo.get!(Command, id)
       assert command.name == "airhorn"
-      assert Enum.map(command.triggers, & &1.type) == ["chat_command", "twitch_follow"]
     end
 
     test "returns validation errors as JSON", %{conn: conn} do

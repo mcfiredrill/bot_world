@@ -1,0 +1,25 @@
+<.header>
+  Media Group: {@media_group.name}
+  <:actions>
+    <.link href={~p"/groups/#{@media_group}/edit"}>
+      <.button>Edit group</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Media Clips">{Enum.map_join(@media_group.commands, ", ", & &1.name)}</:item>
+  <:item title="Triggers">{Enum.map_join(@media_group.triggers, ", ", & &1.name)}</:item>
+</.list>
+
+<div class="mt-4 flex gap-4">
+  <.link href={~p"/groups"} class="text-zinc-600">← Back to groups</.link>
+  <.link
+    href={~p"/groups/#{@media_group}"}
+    method="delete"
+    data-confirm={"Delete #{@media_group.name}?"}
+    class="text-red-600"
+  >
+    Delete group
+  </.link>
+</div>

@@ -38,187 +38,10 @@
 
   <.input field={f[:media_file]} type="file" label="Media File" />
 
-  <div class="space-y-4">
-    <div class="flex items-center justify-between gap-4">
-      <h3 class="text-lg font-semibold text-zinc-900">Triggers</h3>
-      <button
-        type="button"
-        id="add-command-trigger"
-        class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-      >
-        Add Trigger
-      </button>
-    </div>
-
-    <div id="command-trigger-fields" data-next-index={@trigger_form_count} class="space-y-4">
-      <.inputs_for :let={trigger_form} field={f[:triggers]}>
-        <div
-          data-trigger-row
-          class="grid gap-4 rounded-xl border border-zinc-200 p-4 md:grid-cols-[1fr_1fr_1fr_auto]"
-        >
-          <.input field={trigger_form[:name]} type="text" label="Trigger Name" />
-
-          <.input
-            field={trigger_form[:type]}
-            type="select"
-            label="Trigger Type"
-            options={@trigger_type_options}
-            prompt="Choose a trigger type"
-            data-trigger-type-select=""
-          />
-
-          <div data-trigger-field="twitch_point_redeem">
-            <.input
-              field={trigger_form[:reward_name]}
-              type="text"
-              label="Reward Name"
-              placeholder="Matches any redeem if blank"
-            />
-          </div>
-
-          <div data-trigger-field="twitch_bits">
-            <.input
-              field={trigger_form[:bits_amount]}
-              type="number"
-              label="Bits Amount"
-              placeholder="Matches any amount if blank"
-            />
-          </div>
-
-          <div class="flex items-end">
-            <button
-              type="button"
-              data-remove-trigger
-              class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      </.inputs_for>
-    </div>
-  </div>
-
   <:actions>
     <.button>Save Command</.button>
   </:actions>
 </.simple_form>
-
-<template id="command-trigger-template">
-  <div
-    data-trigger-row
-    class="grid gap-4 rounded-xl border border-zinc-200 p-4 md:grid-cols-[1fr_1fr_1fr_auto]"
-  >
-    <div>
-      <.label for="command_triggers___INDEX___name">Trigger Name</.label>
-      <input
-        type="text"
-        name="command[triggers][__INDEX__][name]"
-        id="command_triggers___INDEX___name"
-        class="mt-2 block w-full rounded-lg border-zinc-300 text-zinc-900 focus:border-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-      />
-    </div>
-
-    <div>
-      <.label for="command_triggers___INDEX___type">Trigger Type</.label>
-      <select
-        name="command[triggers][__INDEX__][type]"
-        id="command_triggers___INDEX___type"
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
-        data-trigger-type-select=""
-      >
-        <option value="">Choose a trigger type</option>
-        <%= for {label, value} <- @trigger_type_options do %>
-          <option value={value}>{label}</option>
-        <% end %>
-      </select>
-    </div>
-
-    <div data-trigger-field="twitch_point_redeem">
-      <.label for="command_triggers___INDEX___reward_name">Reward Name</.label>
-      <input
-        type="text"
-        name="command[triggers][__INDEX__][reward_name]"
-        id="command_triggers___INDEX___reward_name"
-        placeholder="Matches any redeem if blank"
-        class="mt-2 block w-full rounded-lg border-zinc-300 text-zinc-900 focus:border-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-      />
-    </div>
-
-    <div data-trigger-field="twitch_bits">
-      <.label for="command_triggers___INDEX___bits_amount">Bits Amount</.label>
-      <input
-        type="number"
-        name="command[triggers][__INDEX__][bits_amount]"
-        id="command_triggers___INDEX___bits_amount"
-        placeholder="Matches any amount if blank"
-        class="mt-2 block w-full rounded-lg border-zinc-300 text-zinc-900 focus:border-zinc-400 focus:ring-0 sm:text-sm sm:leading-6"
-      />
-    </div>
-
-    <div class="flex items-end">
-      <button
-        type="button"
-        data-remove-trigger
-        class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-      >
-        Remove
-      </button>
-    </div>
-  </div>
-</template>
-
-<script>
-  (() => {
-    const container = document.getElementById("command-trigger-fields");
-    const addButton = document.getElementById("add-command-trigger");
-    const template = document.getElementById("command-trigger-template");
-
-    if (!container || !addButton || !template || addButton.dataset.bound === "true") {
-      return;
-    }
-
-    addButton.dataset.bound = "true";
-
-    const updateRow = (row) => {
-      const select = row.querySelector("[data-trigger-type-select]");
-      if (!select) return;
-
-      row.querySelectorAll("[data-trigger-field]").forEach((el) => {
-        el.style.display = el.dataset.triggerField === select.value ? "" : "none";
-      });
-    };
-
-    container.querySelectorAll("[data-trigger-row]").forEach(updateRow);
-
-    addButton.addEventListener("click", () => {
-      const nextIndex = Number(container.dataset.nextIndex || "0");
-      const html = template.innerHTML.replaceAll("__INDEX__", String(nextIndex));
-
-      container.insertAdjacentHTML("beforeend", html);
-      container.dataset.nextIndex = String(nextIndex + 1);
-
-      const row = container.querySelector("[data-trigger-row]:last-of-type");
-      if (row) updateRow(row);
-    });
-
-    container.addEventListener("change", (event) => {
-      if (!event.target.matches("[data-trigger-type-select]")) return;
-      const row = event.target.closest("[data-trigger-row]");
-      if (row) updateRow(row);
-    });
-
-    container.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-remove-trigger]");
-
-      if (!button) {
-        return;
-      }
-
-      button.closest("[data-trigger-row]")?.remove();
-    });
-  })();
-</script>
 
 <hr class="my-6" />
 
@@ -230,7 +53,7 @@
       <tr>
         <th class="px-3 py-2 font-semibold">Command</th>
         <th class="px-3 py-2 font-semibold">Media</th>
-        <th class="px-3 py-2 font-semibold">Triggers</th>
+        <th class="px-3 py-2 font-semibold">Groups</th>
         <th class="px-3 py-2 font-semibold">Actions</th>
       </tr>
     </thead>
@@ -242,13 +65,20 @@
             <span class="text-xs text-zinc-500">{command.media_type}</span>
           </td>
           <td class="px-3 py-3">
-            <span :if={command.triggers == []} class="text-zinc-400">None</span>
-            <ul :if={command.triggers != []} class="space-y-1">
-              <li :for={trigger <- command.triggers}>
-                <span class="font-medium">{trigger.name}</span>
-                <span class="text-zinc-500">
-                  · {trigger_type(trigger)} · {trigger_match(trigger)}
-                </span>
+            <span :if={command.media_groups == []} class="text-zinc-400">None</span>
+            <ul :if={command.media_groups != []} class="space-y-1">
+              <li :for={group <- command.media_groups}>
+                <.link
+                  href={~p"/groups/#{group}"}
+                  class="font-medium text-blue-500 hover:underline"
+                >
+                  {group.name}
+                </.link>
+                <ul :if={group.triggers != []} class="ml-3 text-xs text-zinc-500">
+                  <li :for={trigger <- group.triggers}>
+                    {trigger.name} · {trigger_type(trigger)} · {trigger_match(trigger)}
+                  </li>
+                </ul>
               </li>
             </ul>
           </td>
@@ -264,7 +94,7 @@
             <.link
               href={~p"/commands/#{command}"}
               method="delete"
-              data-confirm={"Delete #{command.name}? This also deletes its linked triggers."}
+              data-confirm={"Delete #{command.name}? This removes it from all media groups."}
               class="text-red-600 hover:underline"
             >
               Delete
