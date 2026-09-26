@@ -30,8 +30,15 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
+  database_ssl =
+    if System.get_env("DATABASE_SSL") in ~w(true 1) do
+      [cacertfile: "/usr/lib/ssl/certs/ca-certificates.crt"]
+    else
+      false
+    end
+
   config :bot_world, BotWorld.Repo,
-    ssl: System.get_env("DATABASE_SSL") in ~w(true 1),
+    ssl: database_ssl,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6
