@@ -1,21 +1,18 @@
 defmodule BotWorldWeb.TriggersAPIController do
   use BotWorldWeb, :controller
 
-  alias BotWorld.{Repo, Trigger}
+  alias BotWorld.{Trigger, Triggers}
   alias BotWorldWeb.ChangesetJSON
-  import Ecto.Query
 
   def index(conn, _params) do
-    triggers = Repo.all(from t in Trigger, preload: [media_group: :commands])
+    triggers = Triggers.list_triggers(conn.assigns.current_user)
     render(conn, :index, triggers: triggers)
   end
 
   def create(conn, %{"trigger" => trigger_params}) do
-    case %Trigger{}
-         |> Trigger.changeset(trigger_params)
-         |> Repo.insert() do
+    case Triggers.create_trigger(conn.assigns.current_user, trigger_params) do
       {:ok, trigger} ->
-        trigger = Repo.preload(trigger, media_group: :commands)
+        trigger = BotWorld.Repo.preload(trigger, media_group: :commands)
 
         conn
         |> put_status(:created)
@@ -30,7 +27,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   end
 
   def create(conn, _params) do
-    changeset = Trigger.changeset(%Trigger{}, %{})
+    changeset = Triggers.change_trigger(%Trigger{user_id: conn.assigns.current_user.id})
 
     conn
     |> put_status(:unprocessable_entity)
@@ -38,18 +35,17 @@ defmodule BotWorldWeb.TriggersAPIController do
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Repo.get!(Trigger, id) |> Repo.preload(media_group: :commands)
+    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :commands)
     render(conn, :show, trigger: trigger)
   end
 
   def update(conn, %{"id" => id, "trigger" => trigger_params}) do
-    trigger = Repo.get!(Trigger, id)
+    trigger = Triggers.get_trigger!(conn.assigns.current_user, id)
 
     case trigger
-         |> Trigger.changeset(trigger_params)
-         |> Repo.update() do
+         |> then(&Triggers.update_trigger(conn.assigns.current_user, &1, trigger_params)) do
       {:ok, trigger} ->
-        render(conn, :show, trigger: Repo.preload(trigger, media_group: :commands))
+        render(conn, :show, trigger: BotWorld.Repo.preload(trigger, media_group: :commands))
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
@@ -60,9 +56,9 @@ defmodule BotWorldWeb.TriggersAPIController do
 
   def update(conn, %{"id" => id}) do
     changeset =
-      Trigger
-      |> Repo.get!(id)
-      |> Trigger.changeset(%{})
+      conn.assigns.current_user
+      |> Triggers.get_trigger!(id)
+      |> Triggers.change_trigger(%{})
 
     conn
     |> put_status(:unprocessable_entity)
@@ -70,9 +66,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   end
 
   def delete(conn, %{"id" => id}) do
-    Trigger
-    |> Repo.get!(id)
-    |> Repo.delete!()
+    {:ok, _trigger} = Triggers.delete_trigger(conn.assigns.current_user, id)
 
     send_resp(conn, :no_content, "")
   end

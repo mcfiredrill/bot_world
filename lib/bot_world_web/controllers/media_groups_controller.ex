@@ -1,42 +1,47 @@
 defmodule BotWorldWeb.MediaGroupsController do
   use BotWorldWeb, :controller
 
-  alias BotWorld.{Command, MediaGroup, MediaGroups, Repo}
+  alias BotWorld.{MediaGroup, MediaGroups}
 
   def index(conn, _params) do
-    render(conn, :index, media_groups: MediaGroups.list_media_groups())
+    render(conn, :index, media_groups: MediaGroups.list_media_groups(conn.assigns.current_user))
   end
 
   def new(conn, _params) do
-    media_group = %MediaGroup{commands: []}
+    media_group = %MediaGroup{user_id: conn.assigns.current_user.id, commands: []}
     render_form(conn, :new, media_group, MediaGroups.change_media_group(media_group))
   end
 
   def create(conn, %{"media_group" => params}) do
-    case MediaGroups.create_media_group(params) do
+    case MediaGroups.create_media_group(conn.assigns.current_user, params) do
       {:ok, media_group} ->
         conn
         |> put_flash(:info, "Media group created successfully.")
         |> redirect(to: ~p"/groups/#{media_group}")
 
       {:error, changeset} ->
-        render_form(conn, :new, %MediaGroup{commands: []}, changeset)
+        render_form(
+          conn,
+          :new,
+          %MediaGroup{user_id: conn.assigns.current_user.id, commands: []},
+          changeset
+        )
     end
   end
 
   def show(conn, %{"id" => id}) do
-    render(conn, :show, media_group: MediaGroups.get_media_group!(id))
+    render(conn, :show, media_group: MediaGroups.get_media_group!(conn.assigns.current_user, id))
   end
 
   def edit(conn, %{"id" => id}) do
-    media_group = MediaGroups.get_media_group!(id)
+    media_group = MediaGroups.get_media_group!(conn.assigns.current_user, id)
     render_form(conn, :edit, media_group, MediaGroups.change_media_group(media_group))
   end
 
   def update(conn, %{"id" => id, "media_group" => params}) do
-    media_group = MediaGroups.get_media_group!(id)
+    media_group = MediaGroups.get_media_group!(conn.assigns.current_user, id)
 
-    case MediaGroups.update_media_group(media_group, params) do
+    case MediaGroups.update_media_group(conn.assigns.current_user, media_group, params) do
       {:ok, media_group} ->
         conn
         |> put_flash(:info, "Media group updated successfully.")
@@ -48,7 +53,7 @@ defmodule BotWorldWeb.MediaGroupsController do
   end
 
   def delete(conn, %{"id" => id}) do
-    media_group = MediaGroups.get_media_group!(id)
+    media_group = MediaGroups.get_media_group!(conn.assigns.current_user, id)
 
     case MediaGroups.delete_media_group(media_group) do
       {:ok, _media_group} ->
@@ -74,7 +79,7 @@ defmodule BotWorldWeb.MediaGroupsController do
     render(conn, template,
       media_group: media_group,
       changeset: changeset,
-      commands: Repo.all(Command),
+      commands: BotWorld.Commands.list_commands(conn.assigns.current_user),
       selected_command_ids: selected_command_ids
     )
   end

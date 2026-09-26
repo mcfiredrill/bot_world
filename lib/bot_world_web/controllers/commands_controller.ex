@@ -1,16 +1,14 @@
 defmodule BotWorldWeb.CommandsController do
   use BotWorldWeb, :controller
-  alias BotWorld.{Command, CommandParams, Repo}
+  alias BotWorld.{Command, CommandParams, Commands, Repo}
 
   def index(conn, _params) do
-    render_index(conn, command_form_changeset())
+    render_index(conn, command_form_changeset(conn.assigns.current_user))
   end
 
   def show(conn, %{"command" => id}) do
     command =
-      Command
-      |> Repo.get!(id)
-      |> Repo.preload(media_groups: :triggers)
+      Commands.get_command!(conn.assigns.current_user, id, media_groups: :triggers)
 
     render(conn, :show, command: command)
   end
@@ -18,14 +16,16 @@ defmodule BotWorldWeb.CommandsController do
   def create(conn, %{"command" => command_params}) do
     case command_params["media_file"] do
       %Plug.Upload{filename: filename, path: temp_path, content_type: content_type} ->
-        s3_key = CommandParams.build_s3_key(command_params["media_type"] || "audio", filename)
+        user = conn.assigns.current_user
+
+        s3_key =
+          CommandParams.build_s3_key(user.id, command_params["media_type"] || "audio", filename)
 
         case BotWorld.S3.upload_file(temp_path, s3_key, content_type) do
           {:ok, %{body: %{key: returned_key}}} ->
             attrs = CommandParams.put_s3_key(command_params, returned_key)
-            changeset = Command.changeset(%Command{}, attrs)
 
-            case Repo.insert(changeset) do
+            case Commands.create_command(user, attrs) do
               {:ok, _command} ->
                 conn
                 |> put_flash(:info, "Command created successfully.")
@@ -38,12 +38,12 @@ defmodule BotWorldWeb.CommandsController do
           {:error, reason} ->
             conn
             |> put_flash(:error, "Failed to upload file: #{inspect(reason)}")
-            |> render_index(command_form_changeset(command_params))
+            |> render_index(command_form_changeset(user, command_params))
         end
 
       _ ->
         changeset =
-          command_form_changeset(command_params)
+          command_form_changeset(conn.assigns.current_user, command_params)
           |> Ecto.Changeset.add_error(:media_file, "can't be blank")
 
         render_index(conn, changeset)
@@ -51,7 +51,8 @@ defmodule BotWorldWeb.CommandsController do
   end
 
   def delete(conn, %{"command" => id}) do
-    command = Command |> Repo.get!(id) |> Repo.preload(media_groups: [:commands, :triggers])
+    command =
+      Commands.get_command!(conn.assigns.current_user, id, media_groups: [:commands, :triggers])
 
     if Enum.any?(command.media_groups, &(length(&1.commands) == 1 and &1.triggers != [])) do
       conn
@@ -82,15 +83,15 @@ defmodule BotWorldWeb.CommandsController do
   defp render_index(conn, changeset) do
     render(conn, :index,
       changeset: changeset,
-      commands: Command |> Repo.all() |> Repo.preload(media_groups: :triggers),
+      commands: Commands.list_commands(conn.assigns.current_user),
       overlay_token: overlay_token()
     )
   end
 
   defp overlay_token, do: Application.get_env(:bot_world, :overlay, [])[:token]
 
-  defp command_form_changeset(command_params \\ %{}) do
+  defp command_form_changeset(user, command_params \\ %{}) do
     params = CommandParams.normalize(command_params)
-    Command.changeset(%Command{}, params)
+    Commands.change_command(%Command{user_id: user.id}, params)
   end
 end

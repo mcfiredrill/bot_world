@@ -16,7 +16,9 @@ defmodule BotWorld.Twitch.Helix do
   def event_specs do
     [
       {"channel.follow", "2",
-       fn cfg -> %{broadcaster_user_id: cfg.broadcaster_id, moderator_user_id: cfg.broadcaster_id} end},
+       fn cfg ->
+         %{broadcaster_user_id: cfg.broadcaster_id, moderator_user_id: cfg.broadcaster_id}
+       end},
       {"channel.subscribe", "1", fn cfg -> %{broadcaster_user_id: cfg.broadcaster_id} end},
       {"channel.cheer", "1", fn cfg -> %{broadcaster_user_id: cfg.broadcaster_id} end},
       {"channel.channel_points_custom_reward_redemption.add", "1",
@@ -24,7 +26,14 @@ defmodule BotWorld.Twitch.Helix do
     ]
   end
 
-  def create_subscription(event_type, version, condition, session_id, config, request_fun \\ &default_request/1) do
+  def create_subscription(
+        event_type,
+        version,
+        condition,
+        session_id,
+        config,
+        request_fun \\ &default_request/1
+      ) do
     body =
       Jason.encode!(%{
         type: event_type,
@@ -56,7 +65,10 @@ defmodule BotWorld.Twitch.Helix do
   end
 
   defp handle_response({:error, reason}, event_type) do
-    Logger.warning("Twitch Helix subscription request error for #{event_type}: #{inspect(reason)}")
+    Logger.warning(
+      "Twitch Helix subscription request error for #{event_type}: #{inspect(reason)}"
+    )
+
     {:error, reason}
   end
 

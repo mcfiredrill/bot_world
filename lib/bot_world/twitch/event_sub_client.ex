@@ -14,7 +14,9 @@ defmodule BotWorld.Twitch.EventSubClient do
   def start_link(_opts \\ []) do
     case BotWorld.Twitch.event_sub_config() do
       {:ok, config} ->
-        WebSockex.start_link(@eventsub_url, __MODULE__, %{session_id: nil, config: config}, name: __MODULE__)
+        WebSockex.start_link(@eventsub_url, __MODULE__, %{session_id: nil, config: config},
+          name: __MODULE__
+        )
 
       {:error, reason} ->
         Logger.warning("Not starting Twitch EventSub client: #{inspect(reason)}")
@@ -54,19 +56,25 @@ defmodule BotWorld.Twitch.EventSubClient do
   end
 
   defp handle_message(%{"metadata" => %{"message_type" => "session_reconnect"}}, state) do
-    Logger.warning("Twitch EventSub requested reconnect; closing so the supervisor restarts fresh")
+    Logger.warning(
+      "Twitch EventSub requested reconnect; closing so the supervisor restarts fresh"
+    )
+
     {:close, state}
   end
 
   defp handle_message(
          %{
-           "metadata" => %{"message_type" => "notification", "subscription_type" => subscription_type},
+           "metadata" => %{
+             "message_type" => "notification",
+             "subscription_type" => subscription_type
+           },
            "payload" => %{"event" => event}
          },
          state
        ) do
     Logger.info("Twitch EventSub notification: #{subscription_type} #{inspect(event)}")
-    Commands.dispatch_event(subscription_type, event)
+    Commands.dispatch_event(state.config.user_id, subscription_type, event)
     {:ok, state}
   end
 

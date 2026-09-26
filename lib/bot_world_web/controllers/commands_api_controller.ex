@@ -3,15 +3,13 @@ defmodule BotWorldWeb.CommandsAPIController do
 
   import Ecto.Changeset
 
-  alias BotWorld.{Command, CommandParams, Repo, S3}
+  alias BotWorld.{Command, CommandParams, Commands, S3}
   alias BotWorldWeb.ChangesetJSON
 
   def create(conn, %{"command" => command_params}) do
     attrs = CommandParams.normalize(command_params)
 
-    case %Command{}
-         |> Command.changeset(attrs)
-         |> Repo.insert() do
+    case Commands.create_command(conn.assigns.current_user, attrs) do
       {:ok, command} ->
         conn
         |> put_status(:created)
@@ -27,7 +25,11 @@ defmodule BotWorldWeb.CommandsAPIController do
   def create(conn, _params) do
     conn
     |> put_status(:unprocessable_entity)
-    |> json(ChangesetJSON.errors(Command.changeset(%Command{}, %{})))
+    |> json(
+      ChangesetJSON.errors(
+        Commands.change_command(%Command{user_id: conn.assigns.current_user.id}, %{})
+      )
+    )
   end
 
   def presign(conn, %{"upload" => upload_params}) do
@@ -37,7 +39,7 @@ defmodule BotWorldWeb.CommandsAPIController do
       %{filename: filename, content_type: content_type, media_type: media_type} =
         apply_changes(changeset)
 
-      s3_key = CommandParams.build_s3_key(media_type, filename)
+      s3_key = CommandParams.build_s3_key(conn.assigns.current_user.id, media_type, filename)
 
       case S3.presign_upload(s3_key, content_type) do
         {:ok, upload} ->

@@ -53,7 +53,8 @@ defmodule BotWorld.Twitch do
   """
   def connect(user, code, request_fun \\ &default_request/1) do
     with {:ok, token} <- exchange_code(code, request_fun),
-         {:ok, twitch_user} <- Helix.get_current_user(token["access_token"], config().client_id, request_fun) do
+         {:ok, twitch_user} <-
+           Helix.get_current_user(token["access_token"], config().client_id, request_fun) do
       upsert_credential(user, %{
         twitch_user_id: twitch_user["id"],
         twitch_login: twitch_user["login"],
@@ -99,6 +100,7 @@ defmodule BotWorld.Twitch do
         with {:ok, access_token} <- fresh_access_token(credential, request_fun) do
           {:ok,
            %{
+             user_id: credential.user_id,
              client_id: config().client_id,
              oauth_token: access_token,
              broadcaster_id: credential.twitch_user_id
@@ -154,7 +156,8 @@ defmodule BotWorld.Twitch do
     |> handle_token_response()
   end
 
-  defp handle_token_response({:ok, %Finch.Response{status: status, body: body}}) when status in 200..299 do
+  defp handle_token_response({:ok, %Finch.Response{status: status, body: body}})
+       when status in 200..299 do
     {:ok, Jason.decode!(body)}
   end
 
@@ -189,7 +192,10 @@ defmodule BotWorld.Twitch do
       pid -> DynamicSupervisor.terminate_child(BotWorld.Twitch.ClientSupervisor, pid)
     end
 
-    DynamicSupervisor.start_child(BotWorld.Twitch.ClientSupervisor, BotWorld.Twitch.EventSubClient)
+    DynamicSupervisor.start_child(
+      BotWorld.Twitch.ClientSupervisor,
+      BotWorld.Twitch.EventSubClient
+    )
   end
 
   @doc """

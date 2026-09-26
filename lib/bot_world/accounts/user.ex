@@ -8,6 +8,11 @@ defmodule BotWorld.Accounts.User do
     field :password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
 
+    has_many :commands, BotWorld.Command
+    has_many :media_groups, BotWorld.MediaGroup
+    has_many :triggers, BotWorld.Trigger
+    has_one :twitch_credential, BotWorld.Twitch.Credential
+
     timestamps(type: :utc_datetime)
   end
 

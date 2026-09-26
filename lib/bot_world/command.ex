@@ -7,7 +7,11 @@ defmodule BotWorld.Command do
     field :aliases, {:array, :string}, default: []
     field :s3_key, :string
     field :media_type, :string, default: "audio"
-    many_to_many :media_groups, BotWorld.MediaGroup, join_through: "media_group_commands"
+    belongs_to :user, BotWorld.Accounts.User
+
+    many_to_many :media_groups, BotWorld.MediaGroup,
+      join_through: BotWorld.MediaGroupCommand,
+      join_defaults: :set_join_user
 
     timestamps(type: :utc_datetime)
   end
@@ -19,4 +23,6 @@ defmodule BotWorld.Command do
     |> validate_required([:name, :s3_key])
     |> validate_inclusion(:media_type, ["audio", "video"])
   end
+
+  def set_join_user(join, command), do: %{join | user_id: command.user_id}
 end

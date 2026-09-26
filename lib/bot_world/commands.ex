@@ -5,7 +5,8 @@ defmodule BotWorld.Commands do
 
   import Ecto.Query, warn: false
   require Logger
-  alias BotWorld.{Repo, S3, Trigger}
+  alias BotWorld.Accounts.User
+  alias BotWorld.{Command, Repo, S3, Trigger}
 
   @overlay_topic "overlay:playback"
 
@@ -22,9 +23,38 @@ defmodule BotWorld.Commands do
     Map.get(@eventsub_trigger_types, eventsub_type)
   end
 
-  def random_command_for_trigger_type(type) do
+  def list_commands(%User{id: user_id}) do
+    Command
+    |> where([c], c.user_id == ^user_id)
+    |> order_by([c], asc: c.name)
+    |> preload(media_groups: :triggers)
+    |> Repo.all()
+  end
+
+  def get_command!(%User{id: user_id}, id, preloads \\ []) do
+    Command
+    |> Repo.get_by!(id: id, user_id: user_id)
+    |> Repo.preload(preloads)
+  end
+
+  def change_command(%Command{} = command, attrs \\ %{}), do: Command.changeset(command, attrs)
+
+  def create_command(%User{id: user_id}, attrs) do
+    %Command{user_id: user_id}
+    |> Command.changeset(attrs)
+    |> validate_s3_key_owner(user_id)
+    |> Repo.insert()
+  end
+
+  def delete_command(%User{} = user, id) do
+    user
+    |> get_command!(id, media_groups: [:commands, :triggers])
+    |> Repo.delete()
+  end
+
+  def random_command_for_trigger_type(%User{id: user_id}, type) do
     Trigger
-    |> where([t], t.type == ^type)
+    |> where([t], t.user_id == ^user_id and t.type == ^type)
     |> join(:inner, [t], g in assoc(t, :media_group))
     |> join(:inner, [_t, g], c in assoc(g, :commands))
     |> select([_t, _g, c], c)
@@ -35,17 +65,19 @@ defmodule BotWorld.Commands do
     end
   end
 
-  def dispatch_event(eventsub_type, event_payload) do
+  def dispatch_event(user_or_id, eventsub_type, event_payload) do
+    user_id = user_id(user_or_id)
+
     case trigger_type_for_eventsub_type(eventsub_type) do
       nil ->
         Logger.info("BotWorld.Commands: no trigger type mapping for #{eventsub_type}")
         :ok
 
       trigger_type ->
-        case matching_command_for_event(trigger_type, event_payload) do
+        case matching_command_for_event(user_id, trigger_type, event_payload) do
           {:ok, command} ->
             Logger.info("BotWorld.Commands: playing #{command.name} for #{trigger_type}")
-            broadcast_play(command)
+            broadcast_play(user_id, command)
             :ok
 
           {:error, :no_command} ->
@@ -58,9 +90,9 @@ defmodule BotWorld.Commands do
     end
   end
 
-  defp matching_command_for_event(trigger_type, event_payload) do
+  defp matching_command_for_event(user_id, trigger_type, event_payload) do
     Trigger
-    |> where([t], t.type == ^trigger_type)
+    |> where([t], t.user_id == ^user_id and t.type == ^trigger_type)
     |> join(:inner, [t], g in assoc(t, :media_group))
     |> join(:inner, [_t, g], c in assoc(g, :commands))
     |> select([t, _g, c], {t, c})
@@ -107,7 +139,7 @@ defmodule BotWorld.Commands do
 
   defp blank?(value), do: value in [nil, ""]
 
-  defp broadcast_play(command) do
+  defp broadcast_play(_user_id, command) do
     Phoenix.PubSub.broadcast(
       BotWorld.PubSub,
       @overlay_topic,
@@ -119,4 +151,17 @@ defmodule BotWorld.Commands do
        }}
     )
   end
+
+  defp validate_s3_key_owner(changeset, user_id) do
+    expected_prefix = "users/#{user_id}/"
+
+    Ecto.Changeset.validate_change(changeset, :s3_key, fn :s3_key, s3_key ->
+      if String.starts_with?(s3_key, expected_prefix),
+        do: [],
+        else: [s3_key: "must belong to the authenticated user"]
+    end)
+  end
+
+  defp user_id(%User{id: id}), do: id
+  defp user_id(id) when is_integer(id), do: id
 end

@@ -13,9 +13,9 @@ defmodule BotWorld.CommandParams do
     |> Map.put("s3_key", s3_key)
   end
 
-  def build_s3_key(media_type, filename) do
+  def build_s3_key(user_id, media_type, filename) do
     prefix = if media_type == "video", do: "video", else: "sfx"
-    "#{prefix}/#{UUID.uuid4()}_#{Path.basename(filename)}"
+    "users/#{user_id}/#{prefix}/#{UUID.uuid4()}_#{Path.basename(filename)}"
   end
 
   defp normalize_aliases(%{"aliases" => aliases} = params) when is_binary(aliases) do

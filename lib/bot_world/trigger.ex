@@ -7,6 +7,7 @@ defmodule BotWorld.Trigger do
     field :type, :string
     field :reward_name, :string
     field :bits_amount, :integer
+    belongs_to :user, BotWorld.Accounts.User
     belongs_to :media_group, BotWorld.MediaGroup
 
     timestamps(type: :utc_datetime)
@@ -23,6 +24,7 @@ defmodule BotWorld.Trigger do
     |> validate_trigger_fields()
     |> validate_required([:media_group_id])
     |> foreign_key_constraint(:media_group_id)
+    |> foreign_key_constraint(:media_group_id, name: :triggers_media_group_tenant_fkey)
   end
 
   defp validate_trigger_fields(changeset) do
