@@ -2,7 +2,9 @@ defmodule BotWorld.S3 do
   @bucket "bot-world"
   @region "us-east-1"
 
-  def bucket, do: @bucket
+  def bucket do
+    System.get_env("S3_BUCKET") || "bot-world"
+  end
 
   def upload_file(file_path, s3_key, content_type, request_fun \\ &ExAws.request/1) do
     upload = build_upload(file_path, s3_key, content_type)
