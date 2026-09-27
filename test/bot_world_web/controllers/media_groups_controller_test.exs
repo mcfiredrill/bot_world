@@ -5,15 +5,15 @@ defmodule BotWorldWeb.MediaGroupsControllerTest do
 
   setup :register_and_log_in_user
 
-  defp command_fixture(name) do
-    %Command{}
+  defp command_fixture(user, name) do
+    %Command{user_id: user.id}
     |> Command.changeset(%{name: name, s3_key: "sfx/#{name}.mp3", media_type: "audio"})
     |> Repo.insert!()
   end
 
-  test "creates and edits a media group with selected clips", %{conn: conn} do
-    first = command_fixture("first")
-    second = command_fixture("second")
+  test "creates and edits a media group with selected clips", %{conn: conn, user: user} do
+    first = command_fixture(user, "first")
+    second = command_fixture(user, "second")
 
     create_conn =
       post(conn, ~p"/groups", %{
@@ -37,8 +37,8 @@ defmodule BotWorldWeb.MediaGroupsControllerTest do
     assert Enum.map(updated.commands, & &1.id) == [second.id]
   end
 
-  test "renders group controls", %{conn: conn} do
-    command_fixture("airhorn")
+  test "renders group controls", %{conn: conn, user: user} do
+    command_fixture(user, "airhorn")
     body = conn |> get(~p"/groups/new") |> html_response(:ok)
 
     assert body =~ "New Media Group"

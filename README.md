@@ -25,6 +25,13 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
+## Tenant ownership migration
+
+The tenant ownership migration adds required `user_id` columns to commands,
+media groups, triggers, and media-group memberships. It intentionally does not
+backfill existing rows. Deploy it only against a new or explicitly reset
+database; existing media objects in S3 are not removed by a database reset.
+
 ## Learn more
 
   * Official website: https://www.phoenixframework.org/

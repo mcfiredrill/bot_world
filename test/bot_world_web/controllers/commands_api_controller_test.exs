@@ -8,6 +8,16 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
   end
 
   describe "authentication" do
+    test "requires an authenticated user to list commands", %{conn: conn} do
+      conn =
+        conn
+        |> json_conn()
+        |> get(~p"/api/commands")
+
+      assert %{"errors" => %{"detail" => "Authentication required."}} =
+               json_response(conn, :unauthorized)
+    end
+
     test "requires an authenticated user to create commands", %{conn: conn} do
       conn =
         conn
@@ -39,7 +49,9 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "creates a command from JSON", %{conn: conn} do
+    test "creates a command from JSON", %{conn: conn, user: user} do
+      s3_key = "users/#{user.id}/sfx/airhorn.mp3"
+
       conn =
         conn
         |> json_conn()
@@ -47,7 +59,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
           command: %{
             name: "airhorn",
             aliases: ["horn", "loud"],
-            s3_key: "sfx/airhorn.mp3",
+            s3_key: s3_key,
             media_type: "audio"
           }
         })
@@ -57,7 +69,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
                  "id" => id,
                  "name" => "airhorn",
                  "aliases" => ["horn", "loud"],
-                 "s3_key" => "sfx/airhorn.mp3",
+                 "s3_key" => ^s3_key,
                  "media_type" => "audio"
                }
              } = json_response(conn, :created)
@@ -83,7 +95,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "returns presigned upload details for video uploads", %{conn: conn} do
+    test "returns presigned upload details for video uploads", %{conn: conn, user: user} do
       conn =
         conn
         |> json_conn()
@@ -106,7 +118,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
                }
              } = json_response(conn, :ok)
 
-      assert String.starts_with?(key, "video/")
+      assert String.starts_with?(key, "users/#{user.id}/video/")
       assert String.contains?(key, "_celebration.mp4")
       assert String.starts_with?(url, "http://localhost:9000/bot-world/#{key}?")
       assert String.contains?(url, "X-Amz-Algorithm=")

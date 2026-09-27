@@ -40,6 +40,20 @@ defmodule BotWorld.DataCase do
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end
 
+  def register_user(attrs \\ %{}) do
+    unique = System.unique_integer([:positive])
+
+    {:ok, user} =
+      attrs
+      |> Enum.into(%{
+        email: "user-#{unique}@example.com",
+        password: "hello world 123!"
+      })
+      |> BotWorld.Accounts.register_user()
+
+    user
+  end
+
   @doc """
   A helper that transforms changeset errors into a map of messages.
 

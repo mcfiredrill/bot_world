@@ -9,9 +9,9 @@ defmodule BotWorldWeb.CommandsControllerTest do
     put_req_header(conn, "accept", "application/vnd.api+json")
   end
 
-  defp command_with_redeem_fixture do
+  defp command_with_redeem_fixture(user) do
     command =
-      %Command{}
+      %Command{user_id: user.id}
       |> Command.changeset(%{
         "name" => "hydrate-sound",
         "s3_key" => "sfx/hydrate.mp3",
@@ -20,14 +20,14 @@ defmodule BotWorldWeb.CommandsControllerTest do
       |> Repo.insert!()
 
     group =
-      %MediaGroup{name: "Hydration sounds"}
+      %MediaGroup{name: "Hydration sounds", user_id: user.id}
       |> Repo.preload(:commands)
       |> Ecto.Changeset.change()
       |> Ecto.Changeset.put_assoc(:commands, [command])
       |> Repo.insert!()
 
     trigger =
-      %Trigger{}
+      %Trigger{user_id: user.id}
       |> Trigger.changeset(%{
         "name" => "Hydrate redeem",
         "type" => "twitch_point_redeem",
@@ -47,8 +47,11 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert body =~ "Groups"
   end
 
-  test "GET /commands shows trigger matching details in the commands table", %{conn: conn} do
-    {_command, _group, _trigger} = command_with_redeem_fixture()
+  test "GET /commands shows trigger matching details in the commands table", %{
+    conn: conn,
+    user: user
+  } do
+    {_command, _group, _trigger} = command_with_redeem_fixture(user)
 
     body = conn |> get(~p"/commands") |> html_response(200)
 
@@ -57,8 +60,11 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert body =~ "Reward: Hydrate"
   end
 
-  test "GET /commands/:command links to the editor for a linked redeem trigger", %{conn: conn} do
-    {command, _group, trigger} = command_with_redeem_fixture()
+  test "GET /commands/:command links to the editor for a linked redeem trigger", %{
+    conn: conn,
+    user: user
+  } do
+    {command, _group, trigger} = command_with_redeem_fixture(user)
     body = conn |> get(~p"/commands/#{command}") |> html_response(200)
 
     assert body =~ "Reward: Hydrate"
@@ -66,9 +72,28 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert body =~ "Edit trigger"
   end
 
-  test "DELETE /commands/:command deletes an ungrouped command", %{conn: conn} do
+  test "GET /commands/:command does not expose another user's command", %{
+    conn: conn
+  } do
+    other_user = register_user()
+
+    other_command =
+      %Command{user_id: other_user.id}
+      |> Command.changeset(%{
+        "name" => "private",
+        "s3_key" => "users/#{other_user.id}/sfx/private.mp3",
+        "media_type" => "audio"
+      })
+      |> Repo.insert!()
+
+    assert_error_sent :not_found, fn ->
+      get(conn, ~p"/commands/#{other_command}")
+    end
+  end
+
+  test "DELETE /commands/:command deletes an ungrouped command", %{conn: conn, user: user} do
     {:ok, command} =
-      %Command{}
+      %Command{user_id: user.id}
       |> Command.changeset(%{
         "name" => "hydrate-sound",
         "s3_key" => "sfx/hydrate.mp3",
@@ -82,9 +107,9 @@ defmodule BotWorldWeb.CommandsControllerTest do
     assert Repo.get(Command, command.id) == nil
   end
 
-  test "GET /commands returns JSON for a JSON:API accept header", %{conn: conn} do
+  test "GET /commands returns JSON for a JSON:API accept header", %{conn: conn, user: user} do
     {:ok, command} =
-      %Command{}
+      %Command{user_id: user.id}
       |> Command.changeset(%{
         "name" => "airhorn",
         "s3_key" => "sfx/airhorn.mp3",

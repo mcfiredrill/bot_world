@@ -93,12 +93,6 @@ defmodule BotWorldWeb.Router do
 
   # Other scopes may use custom stacks.
   scope "/api", BotWorldWeb do
-    pipe_through :api
-
-    get "/commands", CommandsController, :index
-  end
-
-  scope "/api", BotWorldWeb do
     pipe_through [:api, :api_session, :redirect_if_user_is_authenticated_api]
 
     post "/users/register", UserRegistrationAPIController, :create
@@ -114,6 +108,7 @@ defmodule BotWorldWeb.Router do
   scope "/api", BotWorldWeb do
     pipe_through [:api, :api_session, :require_authenticated_api_user]
 
+    get "/commands", CommandsController, :index
     post "/commands", CommandsAPIController, :create
     post "/commands/presign", CommandsAPIController, :presign
     resources "/triggers", TriggersAPIController, except: [:new, :edit]

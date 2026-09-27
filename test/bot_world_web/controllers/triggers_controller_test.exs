@@ -5,20 +5,20 @@ defmodule BotWorldWeb.TriggersControllerTest do
 
   setup :register_and_log_in_user
 
-  test "POST /triggers/test/bits dispatches an arbitrary bits amount", %{conn: conn} do
+  test "POST /triggers/test/bits dispatches an arbitrary bits amount", %{conn: conn, user: user} do
     command =
-      %Command{}
+      %Command{user_id: user.id}
       |> Command.changeset(%{name: "cheer", s3_key: "sfx/cheer.mp3", media_type: "audio"})
       |> Repo.insert!()
 
     group =
-      %MediaGroup{name: "Cheer clips"}
+      %MediaGroup{name: "Cheer clips", user_id: user.id}
       |> Repo.preload(:commands)
       |> Ecto.Changeset.change()
       |> Ecto.Changeset.put_assoc(:commands, [command])
       |> Repo.insert!()
 
-    %Trigger{}
+    %Trigger{user_id: user.id}
     |> Trigger.changeset(%{
       name: "250 bits",
       type: "twitch_bits",

@@ -7,9 +7,9 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
     put_req_header(conn, "accept", "application/json")
   end
 
-  defp command_fixture do
+  defp command_fixture(user) do
     {:ok, command} =
-      %Command{}
+      %Command{user_id: user.id}
       |> Command.changeset(%{
         name: "applause",
         s3_key: "sfx/applause.mp3",
@@ -20,11 +20,11 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
     command
   end
 
-  defp trigger_fixture(command) do
-    group = group_fixture(command)
+  defp trigger_fixture(user, command) do
+    group = group_fixture(user, command)
 
     {:ok, trigger} =
-      %Trigger{}
+      %Trigger{user_id: user.id}
       |> Trigger.changeset(%{
         name: "Bits trigger",
         type: "twitch_bits",
@@ -35,8 +35,8 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
     Repo.preload(trigger, media_group: :commands)
   end
 
-  defp group_fixture(command) do
-    %MediaGroup{name: "#{command.name} group"}
+  defp group_fixture(user, command) do
+    %MediaGroup{name: "#{command.name} group", user_id: user.id}
     |> Repo.preload(:commands)
     |> Ecto.Changeset.change()
     |> Ecto.Changeset.put_assoc(:commands, [command])
@@ -61,9 +61,9 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "lists triggers and shows nested media group data", %{conn: conn} do
-      command = command_fixture()
-      trigger = trigger_fixture(command)
+    test "lists triggers and shows nested media group data", %{conn: conn, user: user} do
+      command = command_fixture(user)
+      trigger = trigger_fixture(user, command)
 
       conn =
         conn
@@ -98,9 +98,9 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "creates, shows, updates, and deletes triggers", %{conn: conn} do
-      command = command_fixture()
-      group = group_fixture(command)
+    test "creates, shows, updates, and deletes triggers", %{conn: conn, user: user} do
+      command = command_fixture(user)
+      group = group_fixture(user, command)
 
       create_conn =
         conn
@@ -175,6 +175,18 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
                  "media_group_id" => [_ | _]
                }
              } = json_response(conn, :unprocessable_entity)
+    end
+
+    test "does not expose another user's trigger", %{conn: conn} do
+      other_user = register_user()
+      command = command_fixture(other_user)
+      trigger = trigger_fixture(other_user, command)
+
+      assert_error_sent :not_found, fn ->
+        conn
+        |> json_conn()
+        |> get(~p"/api/triggers/#{trigger.id}")
+      end
     end
   end
 end
