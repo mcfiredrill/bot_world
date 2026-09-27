@@ -138,15 +138,23 @@ config :bot_world, :twitch,
 
 config :bot_world, :overlay, token: System.get_env("OVERLAY_TOKEN") || "dev-overlay-token"
 
+if config_env() == :prod do
+  spaces_region = System.get_env("SPACES_REGION") || "nyc3"
+  spaces_bucket = System.get_env("S3_BUCKET") || "bot-world"
 
-spaces_region = System.get_env("SPACES_REGION") || "nyc3"
+  spaces_public_url =
+    System.get_env("S3_PUBLIC_URL") ||
+      "https://#{spaces_bucket}.#{spaces_region}.cdn.digitaloceanspaces.com"
 
-config :ex_aws,
-       access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}],
-       secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}],
-       region: spaces_region,
-       s3: [
-         scheme: "https://",
-         host: "#{spaces_region}.digitaloceanspaces.com",
-         port: 443
-       ]
+  config :ex_aws,
+    access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}],
+    secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}],
+    region: spaces_region,
+    s3: [
+      scheme: "https://",
+      host: "#{spaces_region}.digitaloceanspaces.com",
+      port: 443
+    ]
+
+  config :bot_world, :s3, public_url: spaces_public_url
+end

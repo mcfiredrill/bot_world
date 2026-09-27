@@ -1,5 +1,8 @@
 defmodule BotWorld.TenancyTest do
-  use BotWorld.DataCase, async: true
+  # These tests subscribe to the shared overlay PubSub topic, so running them
+  # alongside other dispatch tests can leak unrelated playback messages into
+  # this process.
+  use BotWorld.DataCase, async: false
 
   alias BotWorld.{Command, Commands, MediaGroupCommand, MediaGroups, Repo, Triggers}
 

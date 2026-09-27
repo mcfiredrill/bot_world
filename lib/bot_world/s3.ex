@@ -49,8 +49,10 @@ defmodule BotWorld.S3 do
   end
 
   def public_url(key) do
-    region = region()
-    "https://#{bucket()}.#{region}.cdn.digitaloceanspaces.com/#{key}"
+    case Application.get_env(:bot_world, :s3, [])[:public_url] do
+      nil -> endpoint_public_url(key)
+      public_url -> "#{String.trim_trailing(public_url, "/")}/#{key}"
+    end
   end
 
   defp build_upload(file_path, s3_key, content_type) do
@@ -123,4 +125,33 @@ defmodule BotWorld.S3 do
   end
 
   defp error_matches?(_reason, _phrases), do: false
+
+  defp endpoint_public_url(key) do
+    %URI{
+      scheme: endpoint_scheme(),
+      host: endpoint_host(),
+      port: endpoint_port(),
+      path: "/#{bucket()}/#{key}"
+    }
+    |> URI.to_string()
+  end
+
+  defp endpoint_scheme do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:scheme, "https://")
+    |> String.trim_trailing("://")
+  end
+
+  defp endpoint_host do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:host, "s3.amazonaws.com")
+  end
+
+  defp endpoint_port do
+    :ex_aws
+    |> Application.get_env(:s3, [])
+    |> Keyword.get(:port)
+  end
 end
