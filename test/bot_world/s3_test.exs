@@ -15,7 +15,7 @@ defmodule BotWorld.S3Test do
       %ExAws.S3.Upload{} = upload ->
         :counters.add(counter, 1, 1)
         attempt = :counters.get(counter, 1)
-        send(parent, {:upload_attempt, attempt, upload.bucket, upload.path})
+        send(parent, {:upload_attempt, attempt, upload.bucket, upload.path, upload.opts})
 
         if attempt == 1 do
           {:error, "The specified bucket does not exist"}
@@ -31,9 +31,11 @@ defmodule BotWorld.S3Test do
     assert {:ok, %{body: %{key: "sfx/test.mp3"}}} =
              S3.upload_file(file_path, "sfx/test.mp3", "audio/mpeg", request_fun)
 
-    assert_received {:upload_attempt, 1, "bot-world", "sfx/test.mp3"}
+    assert_received {:upload_attempt, 1, "bot-world", "sfx/test.mp3", upload_opts}
+    assert upload_opts[:acl] == :public_read
+    assert upload_opts[:content_type] == "audio/mpeg"
     assert_received {:put_bucket, "bot-world"}
-    assert_received {:upload_attempt, 2, "bot-world", "sfx/test.mp3"}
+    assert_received {:upload_attempt, 2, "bot-world", "sfx/test.mp3", ^upload_opts}
   end
 
   test "returns non-bucket upload errors without trying to create the bucket" do
@@ -71,12 +73,19 @@ defmodule BotWorld.S3Test do
     assert %{
              key: "sfx/airhorn.mp3",
              method: "PUT",
-             headers: %{"content-type" => "audio/mpeg"},
+             headers: %{
+               "content-type" => "audio/mpeg",
+               "x-amz-acl" => "public-read"
+             },
              expires_in: 3600
            } = upload
 
     assert String.starts_with?(upload.url, "http://localhost:9000/bot-world/sfx/airhorn.mp3?")
-    assert String.contains?(upload.url, "X-Amz-SignedHeaders=content-type%3Bhost")
+
+    assert String.contains?(
+             upload.url,
+             "X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-acl"
+           )
   end
 
   defp temp_file_path do

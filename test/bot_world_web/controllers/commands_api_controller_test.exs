@@ -112,7 +112,10 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
                  "key" => key,
                  "method" => "PUT",
                  "url" => url,
-                 "headers" => %{"content-type" => "video/mp4"},
+                 "headers" => %{
+                   "content-type" => "video/mp4",
+                   "x-amz-acl" => "public-read"
+                 },
                  "media_type" => "video",
                  "expires_in" => 3600
                }

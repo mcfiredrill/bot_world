@@ -27,7 +27,7 @@ defmodule BotWorld.S3 do
 
   def presign_upload(s3_key, content_type, opts \\ []) do
     expires_in = Keyword.get(opts, :expires_in, 3600)
-    headers = [{"content-type", content_type}]
+    headers = [{"content-type", content_type}, {"x-amz-acl", "public-read"}]
 
     :s3
     |> ExAws.Config.new()
@@ -39,7 +39,7 @@ defmodule BotWorld.S3 do
            key: s3_key,
            method: "PUT",
            url: url,
-           headers: %{"content-type" => content_type},
+           headers: %{"content-type" => content_type, "x-amz-acl" => "public-read"},
            expires_in: expires_in
          }}
 
@@ -58,7 +58,7 @@ defmodule BotWorld.S3 do
   defp build_upload(file_path, s3_key, content_type) do
     file_path
     |> ExAws.S3.Upload.stream_file()
-    |> ExAws.S3.upload(bucket(), s3_key, content_type: content_type)
+    |> ExAws.S3.upload(bucket(), s3_key, content_type: content_type, acl: :public_read)
   end
 
   defp ensure_bucket_exists(request_fun) do
