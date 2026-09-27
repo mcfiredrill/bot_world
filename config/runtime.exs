@@ -137,3 +137,16 @@ config :bot_world, :twitch,
   redirect_uri: twitch_redirect_uri
 
 config :bot_world, :overlay, token: System.get_env("OVERLAY_TOKEN") || "dev-overlay-token"
+
+
+spaces_region = System.get_env("SPACES_REGION") || "nyc3"
+
+config :ex_aws,
+       access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}],
+       secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}],
+       region: spaces_region,
+       s3: [
+         scheme: "https://",
+         host: "#{spaces_region}.digitaloceanspaces.com",
+         port: 443
+       ]

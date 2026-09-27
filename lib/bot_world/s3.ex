@@ -1,9 +1,10 @@
 defmodule BotWorld.S3 do
-  @bucket "bot-world"
-  @region "us-east-1"
-
   def bucket do
     System.get_env("S3_BUCKET") || "bot-world"
+  end
+
+  def region do
+    System.get_env("SPACES_REGION") || "nyc3"
   end
 
   def upload_file(file_path, s3_key, content_type, request_fun \\ &ExAws.request/1) do
@@ -30,7 +31,7 @@ defmodule BotWorld.S3 do
 
     :s3
     |> ExAws.Config.new()
-    |> ExAws.S3.presigned_url(:put, @bucket, s3_key, expires_in: expires_in, headers: headers)
+    |> ExAws.S3.presigned_url(:put, bucket(), s3_key, expires_in: expires_in, headers: headers)
     |> case do
       {:ok, url} ->
         {:ok,
@@ -48,23 +49,18 @@ defmodule BotWorld.S3 do
   end
 
   def public_url(key) do
-    %URI{
-      scheme: endpoint_scheme(),
-      host: endpoint_host(),
-      port: endpoint_port(),
-      path: "/#{@bucket}/#{key}"
-    }
-    |> URI.to_string()
+    region = region()
+    "https://#{bucket()}.#{region}.cdn.digitaloceanspaces.com/#{key}"
   end
 
   defp build_upload(file_path, s3_key, content_type) do
     file_path
     |> ExAws.S3.Upload.stream_file()
-    |> ExAws.S3.upload(@bucket, s3_key, content_type: content_type)
+    |> ExAws.S3.upload(bucket(), s3_key, content_type: content_type)
   end
 
   defp ensure_bucket_exists(request_fun) do
-    case request_fun.(ExAws.S3.put_bucket(@bucket, @region)) do
+    case request_fun.(ExAws.S3.put_bucket(bucket(), region())) do
       {:ok, _result} ->
         ensure_public_read_policy(request_fun)
 
@@ -86,12 +82,12 @@ defmodule BotWorld.S3 do
             "Effect" => "Allow",
             "Principal" => "*",
             "Action" => ["s3:GetObject"],
-            "Resource" => ["arn:aws:s3:::#{@bucket}/*"]
+            "Resource" => ["arn:aws:s3:::#{bucket()}/*"]
           }
         ]
       })
 
-    case request_fun.(ExAws.S3.put_bucket_policy(@bucket, policy)) do
+    case request_fun.(ExAws.S3.put_bucket_policy(bucket(), policy)) do
       {:ok, _result} -> :ok
       {:error, reason} -> {:error, reason}
     end
@@ -127,23 +123,4 @@ defmodule BotWorld.S3 do
   end
 
   defp error_matches?(_reason, _phrases), do: false
-
-  defp endpoint_scheme do
-    :ex_aws
-    |> Application.get_env(:s3, [])
-    |> Keyword.get(:scheme, "https://")
-    |> String.trim_trailing("://")
-  end
-
-  defp endpoint_host do
-    :ex_aws
-    |> Application.get_env(:s3, [])
-    |> Keyword.get(:host, "s3.amazonaws.com")
-  end
-
-  defp endpoint_port do
-    :ex_aws
-    |> Application.get_env(:s3, [])
-    |> Keyword.get(:port)
-  end
 end
