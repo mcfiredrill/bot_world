@@ -1,28 +1,15 @@
 <div class="mx-auto max-w-sm">
   <.header class="text-center">
-    Log in
+    Sign in to BotWorld
     <:subtitle>
-      Don't have an account?
-      <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
-        Sign up
-      </.link>
-      for an account now.
+      Twitch is your BotWorld account. First-time users are registered automatically.
     </:subtitle>
   </.header>
 
-  <.simple_form :let={f} for={%{}} as={:user} action={~p"/users/log_in"}>
-    <.error :if={@error_message}>{@error_message}</.error>
-
-    <.input field={f[:email]} type="email" label="Email" required />
-    <.input field={f[:password]} type="password" label="Password" required />
-
-    <:actions :let={f}>
-      <.input field={f[:remember_me]} type="checkbox" label="Keep me logged in" />
-    </:actions>
-    <:actions>
-      <.button phx-disable-with="Logging in..." class="w-full">
-        Log in <span aria-hidden="true">→</span>
-      </.button>
-    </:actions>
-  </.simple_form>
+  <.link
+    href={~p"/auth/twitch"}
+    class="mt-8 block w-full rounded-lg bg-[#9146ff] px-4 py-3 text-center font-semibold text-white hover:bg-[#772ce8]"
+  >
+    Continue with Twitch <span aria-hidden="true">→</span>
+  </.link>
 </div>

@@ -47,14 +47,10 @@ defmodule BotWorldWeb.Router do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
     get "/users/register", UserRegistrationController, :new
-    post "/users/register", UserRegistrationController, :create
     get "/users/log_in", UserSessionController, :new
-  end
 
-  scope "/", BotWorldWeb do
-    pipe_through [:browser_auth, :redirect_if_user_is_authenticated]
-
-    post "/users/log_in", UserSessionController, :create
+    get "/auth/twitch", TwitchAuthController, :new
+    get "/auth/twitch/callback", TwitchAuthController, :callback
   end
 
   scope "/", BotWorldWeb do
@@ -74,9 +70,6 @@ defmodule BotWorldWeb.Router do
     post "/triggers/test/bits", TriggersController, :test_bits
     resources "/triggers", TriggersController
     resources "/groups", MediaGroupsController
-
-    get "/auth/twitch", TwitchAuthController, :new
-    get "/auth/twitch/callback", TwitchAuthController, :callback
   end
 
   scope "/", BotWorldWeb do
@@ -92,13 +85,6 @@ defmodule BotWorldWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  scope "/api", BotWorldWeb do
-    pipe_through [:api, :api_session, :redirect_if_user_is_authenticated_api]
-
-    post "/users/register", UserRegistrationAPIController, :create
-    post "/users/log_in", UserSessionAPIController, :create
-  end
-
   scope "/api", BotWorldWeb do
     pipe_through [:api, :api_session]
 

@@ -27,9 +27,7 @@
           <li>
             <a href={~p"/groups"} class="hover:text-zinc-700">Groups</a>
           </li>
-          <li class="text-[0.8125rem] text-zinc-500">
-            {@current_user.email}
-          </li>
+          <li class="text-[0.8125rem] text-zinc-500">Signed in with Twitch</li>
           <li>
             <.link href={~p"/users/log_out"} method="delete" class="hover:text-zinc-700">
               Log out
@@ -37,10 +35,7 @@
           </li>
         <% else %>
           <li>
-            <a href={~p"/users/register"} class="hover:text-zinc-700">Register</a>
-          </li>
-          <li>
-            <a href={~p"/users/log_in"} class="hover:text-zinc-700">Log in</a>
+            <a href={~p"/users/log_in"} class="hover:text-zinc-700">Continue with Twitch</a>
           </li>
         <% end %>
       </ul>

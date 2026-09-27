@@ -11,14 +11,10 @@
   Open live overlay ↗
 </a>
 
-<%= if BotWorld.Twitch.get_credential() do %>
+<%= if @twitch_credential do %>
   <p class="text-sm text-zinc-500">
-    Twitch account connected (@{BotWorld.Twitch.get_credential().twitch_login}).
+    Twitch account connected (@{@twitch_credential.twitch_login}).
   </p>
-<% else %>
-  <a href={~p"/auth/twitch"} class="text-blue-500 hover:underline">
-    Connect Twitch account
-  </a>
 <% end %>
 
 <br />

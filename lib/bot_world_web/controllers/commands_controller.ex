@@ -1,6 +1,7 @@
 defmodule BotWorldWeb.CommandsController do
   use BotWorldWeb, :controller
   alias BotWorld.{Command, CommandParams, Commands, Repo}
+  alias BotWorld.Twitch
 
   def index(conn, _params) do
     render_index(conn, command_form_changeset(conn.assigns.current_user))
@@ -84,6 +85,7 @@ defmodule BotWorldWeb.CommandsController do
     render(conn, :index,
       changeset: changeset,
       commands: Commands.list_commands(conn.assigns.current_user),
+      twitch_credential: Twitch.get_credential(conn.assigns.current_user),
       overlay_token: overlay_token()
     )
   end

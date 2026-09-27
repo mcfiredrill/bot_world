@@ -245,8 +245,7 @@ defmodule BotWorldWeb.UserAuth do
   @doc """
   Used for routes that require the user to be authenticated.
 
-  If you want to enforce the user email is confirmed before
-  they use the application at all, here would be a good place.
+  This is the shared browser authentication boundary.
   """
   def require_authenticated_user(conn, _opts) do
     if conn.assigns[:current_user] do

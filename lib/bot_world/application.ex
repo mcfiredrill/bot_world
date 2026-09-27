@@ -14,8 +14,7 @@ defmodule BotWorld.Application do
       {Phoenix.PubSub, name: BotWorld.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: BotWorld.Finch},
-      # Start a worker by calling: BotWorld.Worker.start_link(arg)
-      # {BotWorld.Worker, arg},
+      {Registry, keys: :unique, name: BotWorld.Twitch.ClientRegistry},
       BotWorld.Twitch.ClientSupervisor,
       # Start to serve requests, typically the last entry
       BotWorldWeb.Endpoint

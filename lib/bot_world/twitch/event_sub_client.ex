@@ -11,16 +11,42 @@ defmodule BotWorld.Twitch.EventSubClient do
 
   @eventsub_url "wss://eventsub.wss.twitch.tv/ws"
 
-  def start_link(_opts \\ []) do
-    case BotWorld.Twitch.event_sub_config() do
+  def child_spec(opts) do
+    user_id = Keyword.fetch!(opts, :user_id)
+
+    %{
+      id: {__MODULE__, user_id},
+      start: {__MODULE__, :start_link, [opts]},
+      restart: :permanent
+    }
+  end
+
+  def start_link(opts) do
+    user_id = Keyword.fetch!(opts, :user_id)
+
+    case BotWorld.Twitch.event_sub_config(user_id) do
       {:ok, config} ->
         WebSockex.start_link(@eventsub_url, __MODULE__, %{session_id: nil, config: config},
-          name: __MODULE__
+          name: via(user_id)
         )
 
       {:error, reason} ->
-        Logger.warning("Not starting Twitch EventSub client: #{inspect(reason)}")
+        Logger.warning(
+          "Not starting Twitch EventSub client for user #{user_id}: #{inspect(reason)}"
+        )
+
         :ignore
+    end
+  end
+
+  def via(user_id) do
+    {:via, Registry, {BotWorld.Twitch.ClientRegistry, user_id}}
+  end
+
+  def whereis(user_id) do
+    case Registry.lookup(BotWorld.Twitch.ClientRegistry, user_id) do
+      [{pid, _value}] -> pid
+      [] -> nil
     end
   end
 

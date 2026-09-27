@@ -50,20 +50,12 @@ defmodule BotWorldWeb.ConnCase do
   end
 
   @doc """
-  Registers a user with a unique email.
+  Creates a local user for tests. Production users are created through Twitch.
   """
-  def register_user(attrs \\ %{}) do
-    unique = System.unique_integer([:positive])
-
-    {:ok, user} =
-      attrs
-      |> Enum.into(%{
-        email: "user-#{unique}@example.com",
-        password: "hello world 123!"
-      })
-      |> BotWorld.Accounts.register_user()
-
-    user
+  def register_user(_attrs \\ %{}) do
+    %BotWorld.Accounts.User{}
+    |> BotWorld.Accounts.User.twitch_registration_changeset()
+    |> BotWorld.Repo.insert!()
   end
 
   @doc """

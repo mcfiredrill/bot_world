@@ -3,6 +3,8 @@ defmodule BotWorld.Twitch.Credential do
   import Ecto.Changeset
 
   schema "twitch_credentials" do
+    # Twitch user IDs are stable when a broadcaster changes their login name,
+    # so this (rather than twitch_login) is the canonical external identity.
     field :twitch_user_id, :string
     field :twitch_login, :string
     field :access_token, :string, redact: true

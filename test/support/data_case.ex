@@ -40,28 +40,13 @@ defmodule BotWorld.DataCase do
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end
 
-  def register_user(attrs \\ %{}) do
-    unique = System.unique_integer([:positive])
-
-    {:ok, user} =
-      attrs
-      |> Enum.into(%{
-        email: "user-#{unique}@example.com",
-        password: "hello world 123!"
-      })
-      |> BotWorld.Accounts.register_user()
-
-    user
+  def register_user(_attrs \\ %{}) do
+    %BotWorld.Accounts.User{}
+    |> BotWorld.Accounts.User.twitch_registration_changeset()
+    |> BotWorld.Repo.insert!()
   end
 
-  @doc """
-  A helper that transforms changeset errors into a map of messages.
-
-      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
-      assert "password is too short" in errors_on(changeset).password
-      assert %{password: ["password is too short"]} = errors_on(changeset)
-
-  """
+  @doc "A helper that transforms changeset errors into a map of messages."
   def errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
       Regex.replace(~r"%{(\w+)}", message, fn _, key ->

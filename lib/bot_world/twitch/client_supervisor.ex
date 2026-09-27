@@ -1,8 +1,8 @@
 defmodule BotWorld.Twitch.ClientSupervisor do
   @moduledoc """
-  Dynamic supervisor for `BotWorld.Twitch.EventSubClient`, so the client can
-  be started/restarted on demand once a broadcaster's Twitch account is
-  connected, rather than only at application boot.
+  Dynamic supervisor for the per-user `BotWorld.Twitch.EventSubClient`
+  processes. Each connected Twitch identity has an independently restartable
+  WebSocket connection.
   """
 
   use DynamicSupervisor
