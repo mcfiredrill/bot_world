@@ -27,7 +27,9 @@
           <li>
             <a href={~p"/groups"} class="hover:text-zinc-700">Groups</a>
           </li>
-          <li class="text-[0.8125rem] text-zinc-500">Signed in with Twitch</li>
+          <li :if={@current_user.twitch_credential} class="text-[0.8125rem] text-zinc-500">
+            @{@current_user.twitch_credential.twitch_login}
+          </li>
           <li>
             <.link href={~p"/users/log_out"} method="delete" class="hover:text-zinc-700">
               Log out

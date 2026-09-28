@@ -2,6 +2,7 @@ defmodule BotWorldWeb.MediaControllerTest do
   use BotWorldWeb.ConnCase, async: true
 
   alias BotWorld.{MediaItem, MediaGroup, Repo, Trigger}
+  alias BotWorld.Twitch.Credential
 
   setup :register_and_log_in_user
 
@@ -45,6 +46,27 @@ defmodule BotWorldWeb.MediaControllerTest do
 
     assert body =~ "Media File"
     assert body =~ "Groups"
+  end
+
+  test "GET /media shows the current user's Twitch handle in the navbar", %{
+    conn: conn,
+    user: user
+  } do
+    %Credential{}
+    |> Credential.changeset(%{
+      user_id: user.id,
+      twitch_user_id: "123456",
+      twitch_login: "streamer",
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+      scopes: [],
+      expires_at: DateTime.utc_now() |> DateTime.add(3600, :second)
+    })
+    |> Repo.insert!()
+
+    body = conn |> get(~p"/media") |> html_response(200)
+
+    assert body =~ "@streamer"
   end
 
   test "GET /media shows trigger matching details in the media table", %{
