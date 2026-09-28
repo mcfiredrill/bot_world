@@ -48,6 +48,7 @@
     <thead class="border-b border-zinc-200 text-zinc-600">
       <tr>
         <th class="px-3 py-2 font-semibold">Media Item</th>
+        <th class="px-3 py-2 font-semibold">Preview</th>
         <th class="px-3 py-2 font-semibold">Type</th>
         <th class="px-3 py-2 font-semibold">Groups</th>
         <th class="px-3 py-2 font-semibold">Actions</th>
@@ -57,6 +58,29 @@
       <%= for media_item <- @media_items do %>
         <tr>
           <td class="px-3 py-3 font-semibold">{media_item.name}</td>
+          <td class="px-3 py-3">
+            <audio
+              :if={media_item.media_type == "audio"}
+              id={"media-preview-#{media_item.id}"}
+              controls
+              preload="none"
+              class="h-9 w-56 max-w-full"
+              aria-label={"Preview #{media_item.name}"}
+            >
+              <source src={BotWorld.S3.public_url(media_item.s3_key)} />
+            </audio>
+            <video
+              :if={media_item.media_type == "video"}
+              id={"media-preview-#{media_item.id}"}
+              controls
+              muted
+              preload="metadata"
+              class="aspect-video w-40 rounded bg-black object-contain"
+              aria-label={"Preview #{media_item.name}"}
+            >
+              <source src={BotWorld.S3.public_url(media_item.s3_key)} />
+            </video>
+          </td>
           <td class="px-3 py-3">
             <span class="text-xs text-zinc-500">{media_item.media_type}</span>
           </td>

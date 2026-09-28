@@ -84,6 +84,33 @@ defmodule BotWorldWeb.MediaControllerTest do
     assert body =~ "Reward: Hydrate"
   end
 
+  test "GET /media renders type-appropriate media previews", %{conn: conn, user: user} do
+    audio_item =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{
+        name: "airhorn",
+        s3_key: "users/#{user.id}/audio/airhorn.mp3",
+        media_type: "audio"
+      })
+      |> Repo.insert!()
+
+    video_item =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{
+        name: "celebration",
+        s3_key: "users/#{user.id}/video/celebration.mp4",
+        media_type: "video"
+      })
+      |> Repo.insert!()
+
+    body = conn |> get(~p"/media") |> html_response(200)
+
+    assert body =~ ~s(<audio id="media-preview-#{audio_item.id}")
+    assert body =~ ~s(<video id="media-preview-#{video_item.id}")
+    assert body =~ BotWorld.S3.public_url(audio_item.s3_key)
+    assert body =~ BotWorld.S3.public_url(video_item.s3_key)
+  end
+
   test "GET /media/:media_item links to the editor for a linked redeem trigger", %{
     conn: conn,
     user: user
