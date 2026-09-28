@@ -43,9 +43,11 @@ defmodule BotWorldWeb.MediaControllerTest do
   test "GET /media renders the media item form and group navigation", %{conn: conn} do
     conn = get(conn, ~p"/media")
     body = html_response(conn, 200)
+    overlay_token = Application.get_env(:bot_world, :overlay)[:token]
 
     assert body =~ "Media File"
     assert body =~ "Groups"
+    assert body =~ ~s(href="/overlay/#{overlay_token}")
   end
 
   test "GET /media shows the current user's Twitch handle in the navbar", %{

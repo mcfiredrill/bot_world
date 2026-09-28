@@ -11,4 +11,6 @@ defmodule BotWorldWeb.Layouts do
   use BotWorldWeb, :html
 
   embed_templates "layouts/*"
+
+  def overlay_token, do: Application.get_env(:bot_world, :overlay, [])[:token]
 end
