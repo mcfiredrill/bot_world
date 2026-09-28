@@ -9,7 +9,10 @@ defmodule BotWorldWeb.MediaController do
 
   def show(conn, %{"media_item" => id}) do
     media_item =
-      Media.get_media_item!(conn.assigns.current_user, id, media_groups: :triggers)
+      Media.get_media_item!(conn.assigns.current_user, id, [
+        :triggers,
+        media_groups: :triggers
+      ])
 
     render(conn, :show, media_item: media_item)
   end

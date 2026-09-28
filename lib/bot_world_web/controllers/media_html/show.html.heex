@@ -22,9 +22,33 @@
     <% end %>
   </div>
 
-  <div :if={@media_item.media_groups != []}>
-    <h3 class="text-sm font-semibold text-zinc-700">Media Groups and Triggers</h3>
-    <ul class="space-y-1">
+  <div>
+    <h3 class="text-sm font-semibold text-zinc-700">Direct Triggers</h3>
+    <p :if={@media_item.triggers == []} class="text-sm text-zinc-400">None</p>
+    <ul :if={@media_item.triggers != []} class="mt-2 space-y-1">
+      <li
+        :for={trigger <- @media_item.triggers}
+        class="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 px-3 py-2"
+      >
+        <span class="text-sm">
+          {trigger.name}
+          <span class="text-xs text-zinc-500">
+            ({BotWorldWeb.TriggersHTML.format_trigger_type(trigger.type)} · {BotWorldWeb.TriggersHTML.format_trigger_match(
+              trigger
+            )})
+          </span>
+        </span>
+        <.link href={~p"/triggers/#{trigger}/edit"} class="text-sm text-blue-500 hover:underline">
+          Edit trigger
+        </.link>
+      </li>
+    </ul>
+  </div>
+
+  <div>
+    <h3 class="text-sm font-semibold text-zinc-700">Media Groups</h3>
+    <p :if={@media_item.media_groups == []} class="text-sm text-zinc-400">None</p>
+    <ul :if={@media_item.media_groups != []} class="mt-2 space-y-1">
       <%= for group <- @media_item.media_groups do %>
         <li class="rounded-lg border border-zinc-200 px-3 py-2">
           <div class="flex items-center justify-between gap-4">
@@ -35,6 +59,9 @@
               Edit group
             </.link>
           </div>
+          <p :if={group.triggers == []} class="mt-2 text-xs text-zinc-400">
+            No triggers target this group.
+          </p>
           <ul :if={group.triggers != []} class="mt-2 space-y-1">
             <li :for={trigger <- group.triggers} class="flex items-center justify-between gap-4">
               <span class="text-sm">

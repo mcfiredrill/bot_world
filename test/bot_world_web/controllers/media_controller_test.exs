@@ -111,15 +111,30 @@ defmodule BotWorldWeb.MediaControllerTest do
     assert body =~ BotWorld.S3.public_url(video_item.s3_key)
   end
 
-  test "GET /media/:media_item links to the editor for a linked redeem trigger", %{
+  test "GET /media/:media_item shows its direct triggers, groups, and group triggers", %{
     conn: conn,
     user: user
   } do
-    {media_item, _group, trigger} = media_item_with_redeem_fixture(user)
+    {media_item, group, group_trigger} = media_item_with_redeem_fixture(user)
+
+    direct_trigger =
+      %Trigger{user_id: user.id}
+      |> Trigger.changeset(%{
+        name: "Direct follow",
+        type: "twitch_follow",
+        media_item_id: media_item.id
+      })
+      |> Repo.insert!()
+
     body = conn |> get(~p"/media/#{media_item}") |> html_response(200)
 
+    assert body =~ "Direct Triggers"
+    assert body =~ "Direct follow"
+    assert body =~ ~s(href="/triggers/#{direct_trigger.id}/edit")
+    assert body =~ "Media Groups"
+    assert body =~ group.name
     assert body =~ "Reward: Hydrate"
-    assert body =~ ~s(href="/triggers/#{trigger.id}/edit")
+    assert body =~ ~s(href="/triggers/#{group_trigger.id}/edit")
     assert body =~ "Edit trigger"
   end
 
