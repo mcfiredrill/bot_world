@@ -98,6 +98,34 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
+    test "creates and serializes a direct media-item target", %{conn: conn, user: user} do
+      media_item = media_item_fixture(user)
+
+      conn =
+        conn
+        |> json_conn()
+        |> post(~p"/api/triggers", %{
+          trigger: %{
+            name: "Direct follow",
+            type: "twitch_follow",
+            media_item_id: media_item.id
+          }
+        })
+
+      assert %{
+               "trigger" => %{
+                 "target_type" => "media_item",
+                 "media_group_id" => nil,
+                 "media_group" => nil,
+                 "media_item_id" => media_item_id,
+                 "media_item" => %{"id" => nested_media_item_id, "name" => "applause"}
+               }
+             } = json_response(conn, :created)
+
+      assert media_item_id == media_item.id
+      assert nested_media_item_id == media_item.id
+    end
+
     test "creates, shows, updates, and deletes triggers", %{conn: conn, user: user} do
       media_item = media_item_fixture(user)
       group = group_fixture(user, media_item)
@@ -172,7 +200,7 @@ defmodule BotWorldWeb.TriggersAPIControllerTest do
                "errors" => %{
                  "name" => [_ | _],
                  "type" => [_ | _],
-                 "media_group_id" => [_ | _]
+                 "target_type" => [_ | _]
                }
              } = json_response(conn, :unprocessable_entity)
     end

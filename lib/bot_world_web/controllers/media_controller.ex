@@ -57,19 +57,27 @@ defmodule BotWorldWeb.MediaController do
 
   def delete(conn, %{"media_item" => id}) do
     media_item =
-      Media.get_media_item!(conn.assigns.current_user, id,
+      Media.get_media_item!(conn.assigns.current_user, id, [
+        :triggers,
         media_groups: [:media_items, :triggers]
-      )
+      ])
 
-    if Enum.any?(media_item.media_groups, &(length(&1.media_items) == 1 and &1.triggers != [])) do
-      conn
-      |> put_flash(
-        :error,
-        "Remove this clip's triggers or add another clip to its groups before deleting it."
-      )
-      |> redirect(to: ~p"/media/#{media_item}")
-    else
-      delete_media_item(conn, media_item)
+    cond do
+      media_item.triggers != [] ->
+        conn
+        |> put_flash(:error, "Remove this media item's direct triggers before deleting it.")
+        |> redirect(to: ~p"/media/#{media_item}")
+
+      last_item_in_triggered_group?(media_item) ->
+        conn
+        |> put_flash(
+          :error,
+          "Remove this clip's triggers or add another clip to its groups before deleting it."
+        )
+        |> redirect(to: ~p"/media/#{media_item}")
+
+      true ->
+        delete_media_item(conn, media_item)
     end
   end
 
@@ -85,6 +93,10 @@ defmodule BotWorldWeb.MediaController do
         |> put_flash(:error, "Failed to delete media item.")
         |> redirect(to: ~p"/media/#{media_item}")
     end
+  end
+
+  defp last_item_in_triggered_group?(media_item) do
+    Enum.any?(media_item.media_groups, &(length(&1.media_items) == 1 and &1.triggers != []))
   end
 
   defp render_index(conn, changeset) do

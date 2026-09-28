@@ -6,7 +6,7 @@ defmodule BotWorld.Media do
   import Ecto.Query, warn: false
   require Logger
   alias BotWorld.Accounts.User
-  alias BotWorld.{MediaItem, Repo, S3, Trigger}
+  alias BotWorld.{MediaGroup, MediaItem, Repo, S3, Trigger}
 
   @overlay_topic "overlay:playback"
 
@@ -94,22 +94,20 @@ defmodule BotWorld.Media do
   defp matching_media_item_for_event(user_id, trigger_type, event_payload) do
     Trigger
     |> where([t], t.user_id == ^user_id and t.type == ^trigger_type)
-    |> join(:inner, [t], g in assoc(t, :media_group))
-    |> join(:inner, [_t, g], c in assoc(g, :media_items))
-    |> select([t, _g, c], {t, c})
+    |> preload([:media_item, media_group: :media_items])
     |> Repo.all()
     |> filter_matching_triggers(trigger_type, event_payload)
     |> case do
       [] -> {:error, :no_media_item}
-      matches -> {:ok, matches |> Enum.random() |> elem(1)}
+      matches -> matches |> Enum.random() |> media_item_for_trigger()
     end
   end
 
   defp filter_matching_triggers(triggers, "twitch_point_redeem", event_payload) do
     reward_name = get_in(event_payload, ["reward", "title"])
 
-    case Enum.filter(triggers, fn {t, _c} -> matches_reward_name?(t.reward_name, reward_name) end) do
-      [] -> Enum.filter(triggers, fn {t, _c} -> blank?(t.reward_name) end)
+    case Enum.filter(triggers, &matches_reward_name?(&1.reward_name, reward_name)) do
+      [] -> Enum.filter(triggers, &blank?(&1.reward_name))
       specific_matches -> specific_matches
     end
   end
@@ -117,15 +115,24 @@ defmodule BotWorld.Media do
   defp filter_matching_triggers(triggers, "twitch_bits", event_payload) do
     bits = event_payload["bits"]
 
-    case Enum.filter(triggers, fn {t, _c} ->
-           not is_nil(t.bits_amount) and t.bits_amount == bits
+    case Enum.filter(triggers, fn trigger ->
+           not is_nil(trigger.bits_amount) and trigger.bits_amount == bits
          end) do
-      [] -> Enum.filter(triggers, fn {t, _c} -> is_nil(t.bits_amount) end)
+      [] -> Enum.filter(triggers, &is_nil(&1.bits_amount))
       specific_matches -> specific_matches
     end
   end
 
   defp filter_matching_triggers(triggers, _type, _event_payload), do: triggers
+
+  defp media_item_for_trigger(%Trigger{media_item: %MediaItem{} = media_item}),
+    do: {:ok, media_item}
+
+  defp media_item_for_trigger(%Trigger{media_group: %MediaGroup{media_items: []}}),
+    do: {:error, :no_media_item}
+
+  defp media_item_for_trigger(%Trigger{media_group: %MediaGroup{media_items: media_items}}),
+    do: {:ok, Enum.random(media_items)}
 
   defp matches_reward_name?(trigger_reward_name, _event_reward_name)
        when trigger_reward_name in [nil, ""],

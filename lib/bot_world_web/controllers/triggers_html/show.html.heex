@@ -11,13 +11,18 @@
   <:item title="Name">{@trigger.name}</:item>
   <:item title="Type">{format_trigger_type(@trigger.type)}</:item>
   <:item title="Matches">{format_trigger_match(@trigger)}</:item>
-  <:item title="Media Group">
+  <:item :if={@trigger.media_group} title="Media Group">
     <.link href={~p"/groups/#{@trigger.media_group}"} class="text-blue-500 hover:underline">
       {@trigger.media_group.name}
     </.link>
   </:item>
-  <:item title="Media Clips">
+  <:item :if={@trigger.media_group} title="Media Items">
     {Enum.map_join(@trigger.media_group.media_items, ", ", & &1.name)}
+  </:item>
+  <:item :if={@trigger.media_item} title="Media Item">
+    <.link href={~p"/media/#{@trigger.media_item}"} class="text-blue-500 hover:underline">
+      {@trigger.media_item.name}
+    </.link>
   </:item>
 </.list>
 

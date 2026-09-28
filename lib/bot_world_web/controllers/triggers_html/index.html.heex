@@ -10,7 +10,7 @@
 <section class="mb-8 rounded-xl border border-zinc-200 p-4">
   <h2 class="text-lg font-semibold">Test a Bits Trigger</h2>
   <p class="mt-1 text-sm text-zinc-500">
-    Simulates a Twitch cheer and plays a matching group's random clip in the open overlay.
+    Simulates a Twitch cheer and plays the matching target in the open overlay.
   </p>
   <.form
     :let={f}
@@ -28,8 +28,13 @@
   <:col :let={trigger} label="Name">{trigger.name}</:col>
   <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
   <:col :let={trigger} label="Matches">{format_trigger_match(trigger)}</:col>
-  <:col :let={trigger} label="Media Group">{trigger.media_group.name}</:col>
-  <:col :let={trigger} label="Clips">{length(trigger.media_group.media_items)}</:col>
+  <:col :let={trigger} label="Target">
+    <%= if trigger.media_item do %>
+      Media item: {trigger.media_item.name}
+    <% else %>
+      Group: {trigger.media_group.name} ({length(trigger.media_group.media_items)} items)
+    <% end %>
+  </:col>
   <:action :let={trigger}>
     <.link href={~p"/triggers/#{trigger}"}>Show</.link>
   </:action>

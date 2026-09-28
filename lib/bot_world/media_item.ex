@@ -13,6 +13,8 @@ defmodule BotWorld.MediaItem do
       join_through: BotWorld.MediaGroupItem,
       join_defaults: :set_join_user
 
+    has_many :triggers, BotWorld.Trigger
+
     timestamps(type: :utc_datetime)
   end
 

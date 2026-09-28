@@ -37,12 +37,33 @@
   </div>
 
   <.input
-    field={f[:media_group_id]}
+    field={f[:target_type]}
     type="select"
-    label="Media Group"
-    options={Enum.map(@media_groups, fn group -> {group.name, group.id} end)}
-    prompt="Choose a media group"
+    label="Target"
+    options={[{"Media group", "media_group"}, {"Single media item", "media_item"}]}
+    prompt="Choose a target type"
+    data-target-type-select=""
   />
+
+  <div data-target-field="media_group">
+    <.input
+      field={f[:media_group_id]}
+      type="select"
+      label="Media Group"
+      options={Enum.map(@media_groups, fn group -> {group.name, group.id} end)}
+      prompt="Choose a media group"
+    />
+  </div>
+
+  <div data-target-field="media_item">
+    <.input
+      field={f[:media_item_id]}
+      type="select"
+      label="Media Item"
+      options={Enum.map(@media_items, fn item -> {item.name, item.id} end)}
+      prompt="Choose a media item"
+    />
+  </div>
 
   <:actions>
     <.button>Save Trigger</.button>
@@ -53,8 +74,19 @@
   <.link href={~p"/triggers"} class="text-zinc-600 hover:text-zinc-900">
     ← Back to triggers
   </.link>
-  <.link href={~p"/groups/#{@trigger.media_group_id}/edit"} class="text-blue-500 hover:underline">
+  <.link
+    :if={@trigger.media_group_id}
+    href={~p"/groups/#{@trigger.media_group_id}/edit"}
+    class="text-blue-500 hover:underline"
+  >
     Edit media group
+  </.link>
+  <.link
+    :if={@trigger.media_item_id}
+    href={~p"/media/#{@trigger.media_item_id}"}
+    class="text-blue-500 hover:underline"
+  >
+    View media item
   </.link>
 </div>
 
@@ -72,5 +104,16 @@
 
     select.addEventListener("change", update);
     update();
+
+    const targetSelect = document.querySelector("[data-target-type-select]");
+    const updateTarget = () => {
+      document.querySelectorAll("[data-target-field]").forEach((el) => {
+        const active = el.dataset.targetField === targetSelect.value;
+        el.style.display = active ? "" : "none";
+        el.querySelectorAll("select").forEach((input) => input.disabled = !active);
+      });
+    };
+    targetSelect.addEventListener("change", updateTarget);
+    updateTarget();
   })();
 </script>

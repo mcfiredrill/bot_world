@@ -110,6 +110,30 @@ defmodule BotWorldWeb.MediaControllerTest do
     assert Repo.get(MediaItem, media_item.id) == nil
   end
 
+  test "DELETE /media/:media_item refuses to delete a directly targeted item", %{
+    conn: conn,
+    user: user
+  } do
+    media_item =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{name: "direct", s3_key: "sfx/direct.mp3"})
+      |> Repo.insert!()
+
+    %Trigger{user_id: user.id}
+    |> Trigger.changeset(%{
+      name: "Direct follow",
+      type: "twitch_follow",
+      media_item_id: media_item.id
+    })
+    |> Repo.insert!()
+
+    conn = delete(conn, ~p"/media/#{media_item}")
+
+    assert redirected_to(conn) == ~p"/media/#{media_item}"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "direct triggers"
+    assert Repo.get!(MediaItem, media_item.id)
+  end
+
   test "GET /media returns JSON for a JSON:API accept header", %{conn: conn, user: user} do
     {:ok, media_item} =
       %MediaItem{user_id: user.id}

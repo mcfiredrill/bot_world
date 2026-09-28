@@ -9,11 +9,11 @@ defmodule BotWorldWeb.TriggersController do
 
   def new(conn, _params) do
     changeset = Triggers.change_trigger(%Trigger{user_id: conn.assigns.current_user.id})
-    media_groups = media_groups(conn)
 
     render(conn, :new,
       changeset: changeset,
-      media_groups: media_groups,
+      media_groups: media_groups(conn),
+      media_items: media_items(conn),
       trigger_types: Trigger.trigger_types()
     )
   end
@@ -26,30 +26,29 @@ defmodule BotWorldWeb.TriggersController do
         |> redirect(to: ~p"/triggers")
 
       {:error, changeset} ->
-        media_groups = media_groups(conn)
-
         render(conn, :new,
           changeset: changeset,
-          media_groups: media_groups,
+          media_groups: media_groups(conn),
+          media_items: media_items(conn),
           trigger_types: Trigger.trigger_types()
         )
     end
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :media_items)
+    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, trigger_preloads())
     render(conn, :show, trigger: trigger)
   end
 
   def edit(conn, %{"id" => id}) do
     trigger = Triggers.get_trigger!(conn.assigns.current_user, id)
     changeset = Triggers.change_trigger(trigger)
-    media_groups = media_groups(conn)
 
     render(conn, :edit,
       trigger: trigger,
       changeset: changeset,
-      media_groups: media_groups,
+      media_groups: media_groups(conn),
+      media_items: media_items(conn),
       trigger_types: Trigger.trigger_types()
     )
   end
@@ -64,12 +63,11 @@ defmodule BotWorldWeb.TriggersController do
         |> redirect(to: ~p"/triggers/#{trigger}")
 
       {:error, changeset} ->
-        media_groups = media_groups(conn)
-
         render(conn, :edit,
           trigger: trigger,
           changeset: changeset,
-          media_groups: media_groups,
+          media_groups: media_groups(conn),
+          media_items: media_items(conn),
           trigger_types: Trigger.trigger_types()
         )
     end
@@ -112,4 +110,6 @@ defmodule BotWorldWeb.TriggersController do
   end
 
   defp media_groups(conn), do: Triggers.list_media_groups(conn.assigns.current_user)
+  defp media_items(conn), do: Triggers.list_media_items(conn.assigns.current_user)
+  defp trigger_preloads, do: [:media_item, media_group: :media_items]
 end

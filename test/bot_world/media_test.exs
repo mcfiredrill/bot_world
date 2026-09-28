@@ -94,6 +94,28 @@ defmodule BotWorld.MediaTest do
   end
 
   describe "dispatch_event/2" do
+    test "plays a directly targeted media item", %{user: user} do
+      media_item =
+        insert_media_item(user, %{
+          "name" => "direct",
+          "s3_key" => "sfx/direct.mp3",
+          "media_type" => "audio"
+        })
+
+      %Trigger{user_id: user.id}
+      |> Trigger.changeset(%{
+        "name" => "Direct follow",
+        "type" => "twitch_follow",
+        "media_item_id" => media_item.id
+      })
+      |> Repo.insert!()
+
+      Phoenix.PubSub.subscribe(BotWorld.PubSub, Media.overlay_topic())
+
+      assert :ok = Media.dispatch_event(user, "channel.follow", %{})
+      assert_receive {:play_media_item, %{name: "direct"}}
+    end
+
     test "broadcasts a play_media_item message when a media_item matches", %{user: user} do
       insert_media_item(user, %{
         "name" => "airhorn",
