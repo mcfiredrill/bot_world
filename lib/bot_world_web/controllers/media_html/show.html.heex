@@ -1,31 +1,31 @@
 <section class="space-y-6">
   <div>
-    <h2 class="text-2xl font-bold">!{@command.name}</h2>
-    <p class="text-sm text-zinc-500">Media type: {@command.media_type}</p>
+    <h2 class="text-2xl font-bold">!{@media_item.name}</h2>
+    <p class="text-sm text-zinc-500">Media type: {@media_item.media_type}</p>
   </div>
 
-  <div :if={@command.aliases != []}>
+  <div :if={@media_item.aliases != []}>
     <h3 class="text-sm font-semibold text-zinc-700">Aliases</h3>
-    <p>{Enum.join(@command.aliases, ", ")}</p>
+    <p>{Enum.join(@media_item.aliases, ", ")}</p>
   </div>
 
   <div>
     <h3 class="text-sm font-semibold text-zinc-700">Preview</h3>
-    <%= if @command.media_type == "video" do %>
+    <%= if @media_item.media_type == "video" do %>
       <video controls class="max-w-md">
-        <source src={BotWorld.S3.public_url(@command.s3_key)} />
+        <source src={BotWorld.S3.public_url(@media_item.s3_key)} />
       </video>
     <% else %>
       <audio controls>
-        <source src={BotWorld.S3.public_url(@command.s3_key)} />
+        <source src={BotWorld.S3.public_url(@media_item.s3_key)} />
       </audio>
     <% end %>
   </div>
 
-  <div :if={@command.media_groups != []}>
+  <div :if={@media_item.media_groups != []}>
     <h3 class="text-sm font-semibold text-zinc-700">Media Groups and Triggers</h3>
     <ul class="space-y-1">
-      <%= for group <- @command.media_groups do %>
+      <%= for group <- @media_item.media_groups do %>
         <li class="rounded-lg border border-zinc-200 px-3 py-2">
           <div class="flex items-center justify-between gap-4">
             <.link href={~p"/groups/#{group}"} class="font-semibold text-blue-500 hover:underline">
@@ -59,15 +59,15 @@
   </div>
 
   <div>
-    <a href={~p"/commands"} class="text-blue-500 hover:underline">Back to commands</a>
+    <a href={~p"/media"} class="text-blue-500 hover:underline">Back to media</a>
     ·
     <.link
-      href={~p"/commands/#{@command}"}
+      href={~p"/media/#{@media_item}"}
       method="delete"
-      data-confirm={"Delete #{@command.name}? This removes it from all media groups."}
+      data-confirm={"Delete #{@media_item.name}? This removes it from all media groups."}
       class="text-red-600 hover:underline"
     >
-      Delete command
+      Delete media item
     </.link>
   </div>
 </section>

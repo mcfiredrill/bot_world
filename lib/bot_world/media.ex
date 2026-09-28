@@ -1,12 +1,12 @@
-defmodule BotWorld.Commands do
+defmodule BotWorld.Media do
   @moduledoc """
-  The Commands context.
+  The Media context.
   """
 
   import Ecto.Query, warn: false
   require Logger
   alias BotWorld.Accounts.User
-  alias BotWorld.{Command, Repo, S3, Trigger}
+  alias BotWorld.{MediaItem, Repo, S3, Trigger}
 
   @overlay_topic "overlay:playback"
 
@@ -23,45 +23,46 @@ defmodule BotWorld.Commands do
     Map.get(@eventsub_trigger_types, eventsub_type)
   end
 
-  def list_commands(%User{id: user_id}) do
-    Command
+  def list_media_items(%User{id: user_id}) do
+    MediaItem
     |> where([c], c.user_id == ^user_id)
     |> order_by([c], asc: c.name)
     |> preload(media_groups: :triggers)
     |> Repo.all()
   end
 
-  def get_command!(%User{id: user_id}, id, preloads \\ []) do
-    Command
+  def get_media_item!(%User{id: user_id}, id, preloads \\ []) do
+    MediaItem
     |> Repo.get_by!(id: id, user_id: user_id)
     |> Repo.preload(preloads)
   end
 
-  def change_command(%Command{} = command, attrs \\ %{}), do: Command.changeset(command, attrs)
+  def change_media_item(%MediaItem{} = media_item, attrs \\ %{}),
+    do: MediaItem.changeset(media_item, attrs)
 
-  def create_command(%User{id: user_id}, attrs) do
-    %Command{user_id: user_id}
-    |> Command.changeset(attrs)
+  def create_media_item(%User{id: user_id}, attrs) do
+    %MediaItem{user_id: user_id}
+    |> MediaItem.changeset(attrs)
     |> validate_s3_key_owner(user_id)
     |> Repo.insert()
   end
 
-  def delete_command(%User{} = user, id) do
+  def delete_media_item(%User{} = user, id) do
     user
-    |> get_command!(id, media_groups: [:commands, :triggers])
+    |> get_media_item!(id, media_groups: [:media_items, :triggers])
     |> Repo.delete()
   end
 
-  def random_command_for_trigger_type(%User{id: user_id}, type) do
+  def random_media_item_for_trigger_type(%User{id: user_id}, type) do
     Trigger
     |> where([t], t.user_id == ^user_id and t.type == ^type)
     |> join(:inner, [t], g in assoc(t, :media_group))
-    |> join(:inner, [_t, g], c in assoc(g, :commands))
+    |> join(:inner, [_t, g], c in assoc(g, :media_items))
     |> select([_t, _g, c], c)
     |> Repo.all()
     |> case do
-      [] -> {:error, :no_command}
-      commands -> {:ok, Enum.random(commands)}
+      [] -> {:error, :no_media_item}
+      media_items -> {:ok, Enum.random(media_items)}
     end
   end
 
@@ -70,19 +71,19 @@ defmodule BotWorld.Commands do
 
     case trigger_type_for_eventsub_type(eventsub_type) do
       nil ->
-        Logger.info("BotWorld.Commands: no trigger type mapping for #{eventsub_type}")
+        Logger.info("BotWorld.Media: no trigger type mapping for #{eventsub_type}")
         :ok
 
       trigger_type ->
-        case matching_command_for_event(user_id, trigger_type, event_payload) do
-          {:ok, command} ->
-            Logger.info("BotWorld.Commands: playing #{command.name} for #{trigger_type}")
-            broadcast_play(user_id, command)
+        case matching_media_item_for_event(user_id, trigger_type, event_payload) do
+          {:ok, media_item} ->
+            Logger.info("BotWorld.Media: playing #{media_item.name} for #{trigger_type}")
+            broadcast_play(user_id, media_item)
             :ok
 
-          {:error, :no_command} ->
+          {:error, :no_media_item} ->
             Logger.info(
-              "BotWorld.Commands: no command configured for trigger type #{trigger_type}"
+              "BotWorld.Media: no media item configured for trigger type #{trigger_type}"
             )
 
             :ok
@@ -90,16 +91,16 @@ defmodule BotWorld.Commands do
     end
   end
 
-  defp matching_command_for_event(user_id, trigger_type, event_payload) do
+  defp matching_media_item_for_event(user_id, trigger_type, event_payload) do
     Trigger
     |> where([t], t.user_id == ^user_id and t.type == ^trigger_type)
     |> join(:inner, [t], g in assoc(t, :media_group))
-    |> join(:inner, [_t, g], c in assoc(g, :commands))
+    |> join(:inner, [_t, g], c in assoc(g, :media_items))
     |> select([t, _g, c], {t, c})
     |> Repo.all()
     |> filter_matching_triggers(trigger_type, event_payload)
     |> case do
-      [] -> {:error, :no_command}
+      [] -> {:error, :no_media_item}
       matches -> {:ok, matches |> Enum.random() |> elem(1)}
     end
   end
@@ -139,15 +140,15 @@ defmodule BotWorld.Commands do
 
   defp blank?(value), do: value in [nil, ""]
 
-  defp broadcast_play(_user_id, command) do
+  defp broadcast_play(_user_id, media_item) do
     Phoenix.PubSub.broadcast(
       BotWorld.PubSub,
       @overlay_topic,
-      {:play_command,
+      {:play_media_item,
        %{
-         media_type: command.media_type,
-         url: S3.public_url(command.s3_key),
-         name: command.name
+         media_type: media_item.media_type,
+         url: S3.public_url(media_item.s3_key),
+         name: media_item.name
        }}
     )
   end

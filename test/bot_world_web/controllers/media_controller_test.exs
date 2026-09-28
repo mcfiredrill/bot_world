@@ -1,7 +1,7 @@
-defmodule BotWorldWeb.CommandsControllerTest do
+defmodule BotWorldWeb.MediaControllerTest do
   use BotWorldWeb.ConnCase, async: true
 
-  alias BotWorld.{Command, MediaGroup, Repo, Trigger}
+  alias BotWorld.{MediaItem, MediaGroup, Repo, Trigger}
 
   setup :register_and_log_in_user
 
@@ -9,10 +9,10 @@ defmodule BotWorldWeb.CommandsControllerTest do
     put_req_header(conn, "accept", "application/vnd.api+json")
   end
 
-  defp command_with_redeem_fixture(user) do
-    command =
-      %Command{user_id: user.id}
-      |> Command.changeset(%{
+  defp media_item_with_redeem_fixture(user) do
+    media_item =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{
         "name" => "hydrate-sound",
         "s3_key" => "sfx/hydrate.mp3",
         "media_type" => "audio"
@@ -21,9 +21,9 @@ defmodule BotWorldWeb.CommandsControllerTest do
 
     group =
       %MediaGroup{name: "Hydration sounds", user_id: user.id}
-      |> Repo.preload(:commands)
+      |> Repo.preload(:media_items)
       |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:commands, [command])
+      |> Ecto.Changeset.put_assoc(:media_items, [media_item])
       |> Repo.insert!()
 
     trigger =
@@ -36,50 +36,50 @@ defmodule BotWorldWeb.CommandsControllerTest do
       })
       |> Repo.insert!()
 
-    {command, group, trigger}
+    {media_item, group, trigger}
   end
 
-  test "GET /commands renders the media command form and group navigation", %{conn: conn} do
-    conn = get(conn, ~p"/commands")
+  test "GET /media renders the media item form and group navigation", %{conn: conn} do
+    conn = get(conn, ~p"/media")
     body = html_response(conn, 200)
 
     assert body =~ "Media File"
     assert body =~ "Groups"
   end
 
-  test "GET /commands shows trigger matching details in the commands table", %{
+  test "GET /media shows trigger matching details in the media table", %{
     conn: conn,
     user: user
   } do
-    {_command, _group, _trigger} = command_with_redeem_fixture(user)
+    {_media_item, _group, _trigger} = media_item_with_redeem_fixture(user)
 
-    body = conn |> get(~p"/commands") |> html_response(200)
+    body = conn |> get(~p"/media") |> html_response(200)
 
     assert body =~ "Hydrate redeem"
     assert body =~ "Twitch Point Redeem"
     assert body =~ "Reward: Hydrate"
   end
 
-  test "GET /commands/:command links to the editor for a linked redeem trigger", %{
+  test "GET /media/:media_item links to the editor for a linked redeem trigger", %{
     conn: conn,
     user: user
   } do
-    {command, _group, trigger} = command_with_redeem_fixture(user)
-    body = conn |> get(~p"/commands/#{command}") |> html_response(200)
+    {media_item, _group, trigger} = media_item_with_redeem_fixture(user)
+    body = conn |> get(~p"/media/#{media_item}") |> html_response(200)
 
     assert body =~ "Reward: Hydrate"
     assert body =~ ~s(href="/triggers/#{trigger.id}/edit")
     assert body =~ "Edit trigger"
   end
 
-  test "GET /commands/:command does not expose another user's command", %{
+  test "GET /media/:media_item does not expose another user's media item", %{
     conn: conn
   } do
     other_user = register_user()
 
-    other_command =
-      %Command{user_id: other_user.id}
-      |> Command.changeset(%{
+    other_media_item =
+      %MediaItem{user_id: other_user.id}
+      |> MediaItem.changeset(%{
         "name" => "private",
         "s3_key" => "users/#{other_user.id}/sfx/private.mp3",
         "media_type" => "audio"
@@ -87,30 +87,33 @@ defmodule BotWorldWeb.CommandsControllerTest do
       |> Repo.insert!()
 
     assert_error_sent :not_found, fn ->
-      get(conn, ~p"/commands/#{other_command}")
+      get(conn, ~p"/media/#{other_media_item}")
     end
   end
 
-  test "DELETE /commands/:command deletes an ungrouped command", %{conn: conn, user: user} do
-    {:ok, command} =
-      %Command{user_id: user.id}
-      |> Command.changeset(%{
+  test "DELETE /media/:media_item deletes an ungrouped media item", %{
+    conn: conn,
+    user: user
+  } do
+    {:ok, media_item} =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{
         "name" => "hydrate-sound",
         "s3_key" => "sfx/hydrate.mp3",
         "media_type" => "audio"
       })
       |> Repo.insert()
 
-    conn = delete(conn, ~p"/commands/#{command}")
+    conn = delete(conn, ~p"/media/#{media_item}")
 
-    assert redirected_to(conn) == ~p"/commands"
-    assert Repo.get(Command, command.id) == nil
+    assert redirected_to(conn) == ~p"/media"
+    assert Repo.get(MediaItem, media_item.id) == nil
   end
 
-  test "GET /commands returns JSON for a JSON:API accept header", %{conn: conn, user: user} do
-    {:ok, command} =
-      %Command{user_id: user.id}
-      |> Command.changeset(%{
+  test "GET /media returns JSON for a JSON:API accept header", %{conn: conn, user: user} do
+    {:ok, media_item} =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{
         "name" => "airhorn",
         "s3_key" => "sfx/airhorn.mp3",
         "media_type" => "audio"
@@ -120,13 +123,13 @@ defmodule BotWorldWeb.CommandsControllerTest do
     conn =
       conn
       |> json_api_conn()
-      |> get(~p"/commands")
+      |> get(~p"/media")
 
     assert %{
              "data" => [
                %{
                  "id" => id,
-                 "type" => "command",
+                 "type" => "media_item",
                  "attributes" => %{
                    "name" => "airhorn",
                    "s3-key" => "sfx/airhorn.mp3",
@@ -136,14 +139,14 @@ defmodule BotWorldWeb.CommandsControllerTest do
              ]
            } = json_response(conn, 200)
 
-    assert id == Integer.to_string(command.id)
+    assert id == Integer.to_string(media_item.id)
   end
 
-  test "GET /commands returns JSON unauthorized for a JSON:API request when logged out" do
+  test "GET /media returns JSON unauthorized for a JSON:API request when logged out" do
     conn =
       build_conn()
       |> json_api_conn()
-      |> get(~p"/commands")
+      |> get(~p"/media")
 
     assert %{"errors" => [%{"detail" => "Authentication required."}]} = json_response(conn, 401)
   end

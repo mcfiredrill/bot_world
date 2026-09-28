@@ -1,29 +1,29 @@
-defmodule BotWorldWeb.CommandsAPIControllerTest do
+defmodule BotWorldWeb.MediaAPIControllerTest do
   use BotWorldWeb.ConnCase, async: true
 
-  alias BotWorld.{Command, Repo}
+  alias BotWorld.{MediaItem, Repo}
 
   defp json_conn(conn) do
     put_req_header(conn, "accept", "application/json")
   end
 
   describe "authentication" do
-    test "requires an authenticated user to list commands", %{conn: conn} do
+    test "requires an authenticated user to list media_items", %{conn: conn} do
       conn =
         conn
         |> json_conn()
-        |> get(~p"/api/commands")
+        |> get(~p"/api/media")
 
       assert %{"errors" => %{"detail" => "Authentication required."}} =
                json_response(conn, :unauthorized)
     end
 
-    test "requires an authenticated user to create commands", %{conn: conn} do
+    test "requires an authenticated user to create media_items", %{conn: conn} do
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands", %{
-          command: %{name: "airhorn", s3_key: "sfx/airhorn.mp3", media_type: "audio"}
+        |> post(~p"/api/media", %{
+          media_item: %{name: "airhorn", s3_key: "sfx/airhorn.mp3", media_type: "audio"}
         })
 
       assert %{"errors" => %{"detail" => "Authentication required."}} =
@@ -34,7 +34,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands/presign", %{
+        |> post(~p"/api/media/presign", %{
           upload: %{filename: "airhorn.mp3", content_type: "audio/mpeg"}
         })
 
@@ -43,20 +43,20 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
     end
   end
 
-  describe "POST /api/commands" do
+  describe "POST /api/media" do
     setup %{conn: conn} do
       user = register_user()
       %{conn: authenticate_api_user(conn, user), user: user}
     end
 
-    test "creates a command from JSON", %{conn: conn, user: user} do
+    test "creates a media_item from JSON", %{conn: conn, user: user} do
       s3_key = "users/#{user.id}/sfx/airhorn.mp3"
 
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands", %{
-          command: %{
+        |> post(~p"/api/media", %{
+          media_item: %{
             name: "airhorn",
             aliases: ["horn", "loud"],
             s3_key: s3_key,
@@ -65,7 +65,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
         })
 
       assert %{
-               "command" => %{
+               "media_item" => %{
                  "id" => id,
                  "name" => "airhorn",
                  "aliases" => ["horn", "loud"],
@@ -74,22 +74,22 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
                }
              } = json_response(conn, :created)
 
-      command = Repo.get!(Command, id)
-      assert command.name == "airhorn"
+      media_item = Repo.get!(MediaItem, id)
+      assert media_item.name == "airhorn"
     end
 
     test "returns validation errors as JSON", %{conn: conn} do
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands", %{command: %{}})
+        |> post(~p"/api/media", %{media_item: %{}})
 
       assert %{"errors" => %{"name" => [_], "s3_key" => [_]}} =
                json_response(conn, :unprocessable_entity)
     end
   end
 
-  describe "POST /api/commands/presign" do
+  describe "POST /api/media/presign" do
     setup %{conn: conn} do
       user = register_user()
       %{conn: authenticate_api_user(conn, user), user: user}
@@ -99,7 +99,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands/presign", %{
+        |> post(~p"/api/media/presign", %{
           upload: %{
             filename: "celebration.mp4",
             content_type: "video/mp4",
@@ -131,7 +131,7 @@ defmodule BotWorldWeb.CommandsAPIControllerTest do
       conn =
         conn
         |> json_conn()
-        |> post(~p"/api/commands/presign", %{upload: %{media_type: "audio"}})
+        |> post(~p"/api/media/presign", %{upload: %{media_type: "audio"}})
 
       assert %{"errors" => %{"filename" => [_], "content_type" => [_]}} =
                json_response(conn, :unprocessable_entity)

@@ -3,8 +3,8 @@ export const Hooks = {
     mounted() {
       this.mediaEl = null
 
-      this.handleEvent("play_command", payload => {
-        console.log("got play_command event: ", payload);
+      this.handleEvent("play_media_item", payload => {
+        console.log("got play_media_item event: ", payload);
         const tag = payload.media_type === "video" ? "video" : "audio"
 
         if (!this.mediaEl || this.mediaEl.tagName.toLowerCase() !== tag) {

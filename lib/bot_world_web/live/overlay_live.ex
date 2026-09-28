@@ -2,13 +2,13 @@ defmodule BotWorldWeb.OverlayLive do
   use Phoenix.LiveView, layout: false
   use BotWorldWeb, :verified_routes
 
-  alias BotWorld.Commands
+  alias BotWorld.Media
 
   @impl true
   def mount(%{"token" => token}, _session, socket) do
     if token == overlay_token() do
       if connected?(socket) do
-        Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+        Phoenix.PubSub.subscribe(BotWorld.PubSub, Media.overlay_topic())
       end
 
       {:ok, assign(socket, :now_playing, nil)}
@@ -18,11 +18,11 @@ defmodule BotWorldWeb.OverlayLive do
   end
 
   @impl true
-  def handle_info({:play_command, payload}, socket) do
+  def handle_info({:play_media_item, payload}, socket) do
     {:noreply,
      socket
      |> assign(:now_playing, payload)
-     |> push_event("play_command", payload)}
+     |> push_event("play_media_item", payload)}
   end
 
   @impl true

@@ -1,14 +1,14 @@
-defmodule BotWorld.CommandParams do
+defmodule BotWorld.MediaItemParams do
   @allowed_fields ~w(name aliases media_type s3_key)
 
-  def normalize(command_params) do
-    command_params
+  def normalize(media_item_params) do
+    media_item_params
     |> Map.take(@allowed_fields)
     |> normalize_aliases()
   end
 
-  def put_s3_key(command_params, s3_key) do
-    command_params
+  def put_s3_key(media_item_params, s3_key) do
+    media_item_params
     |> normalize()
     |> Map.put("s3_key", s3_key)
   end

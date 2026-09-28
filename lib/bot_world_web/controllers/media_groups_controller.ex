@@ -8,7 +8,7 @@ defmodule BotWorldWeb.MediaGroupsController do
   end
 
   def new(conn, _params) do
-    media_group = %MediaGroup{user_id: conn.assigns.current_user.id, commands: []}
+    media_group = %MediaGroup{user_id: conn.assigns.current_user.id, media_items: []}
     render_form(conn, :new, media_group, MediaGroups.change_media_group(media_group))
   end
 
@@ -23,7 +23,7 @@ defmodule BotWorldWeb.MediaGroupsController do
         render_form(
           conn,
           :new,
-          %MediaGroup{user_id: conn.assigns.current_user.id, commands: []},
+          %MediaGroup{user_id: conn.assigns.current_user.id, media_items: []},
           changeset
         )
     end
@@ -71,16 +71,16 @@ defmodule BotWorldWeb.MediaGroupsController do
   end
 
   defp render_form(conn, template, media_group, changeset) do
-    selected_command_ids =
+    selected_media_item_ids =
       changeset
-      |> Ecto.Changeset.get_field(:commands, media_group.commands)
+      |> Ecto.Changeset.get_field(:media_items, media_group.media_items)
       |> Enum.map(& &1.id)
 
     render(conn, template,
       media_group: media_group,
       changeset: changeset,
-      commands: BotWorld.Commands.list_commands(conn.assigns.current_user),
-      selected_command_ids: selected_command_ids
+      media_items: BotWorld.Media.list_media_items(conn.assigns.current_user),
+      selected_media_item_ids: selected_media_item_ids
     )
   end
 end

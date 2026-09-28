@@ -1,6 +1,6 @@
 defmodule BotWorldWeb.TriggersController do
   use BotWorldWeb, :controller
-  alias BotWorld.{Commands, Trigger, Triggers}
+  alias BotWorld.{Media, Trigger, Triggers}
 
   def index(conn, _params) do
     triggers = Triggers.list_triggers(conn.assigns.current_user)
@@ -37,7 +37,7 @@ defmodule BotWorldWeb.TriggersController do
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :commands)
+    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :media_items)
     render(conn, :show, trigger: trigger)
   end
 
@@ -92,7 +92,7 @@ defmodule BotWorldWeb.TriggersController do
   def test_bits(conn, %{"test_bits" => %{"bits" => bits}}) do
     case Integer.parse(to_string(bits)) do
       {amount, ""} when amount >= 0 ->
-        Commands.dispatch_event(conn.assigns.current_user, "channel.cheer", %{"bits" => amount})
+        Media.dispatch_event(conn.assigns.current_user, "channel.cheer", %{"bits" => amount})
 
         conn
         |> put_flash(:info, "Simulated a #{amount}-bit cheer.")

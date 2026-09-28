@@ -8,7 +8,7 @@
 </.header>
 
 <.list>
-  <:item title="Media Clips">{Enum.map_join(@media_group.commands, ", ", & &1.name)}</:item>
+  <:item title="Media Clips">{Enum.map_join(@media_group.media_items, ", ", & &1.name)}</:item>
   <:item title="Triggers">{Enum.map_join(@media_group.triggers, ", ", & &1.name)}</:item>
 </.list>
 

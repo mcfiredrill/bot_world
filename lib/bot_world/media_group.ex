@@ -6,8 +6,8 @@ defmodule BotWorld.MediaGroup do
     field :name, :string
     belongs_to :user, BotWorld.Accounts.User
 
-    many_to_many :commands, BotWorld.Command,
-      join_through: BotWorld.MediaGroupCommand,
+    many_to_many :media_items, BotWorld.MediaItem,
+      join_through: BotWorld.MediaGroupItem,
       join_defaults: :set_join_user,
       on_replace: :delete
 

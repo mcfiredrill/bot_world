@@ -9,26 +9,26 @@
       One clip is selected randomly whenever this group is triggered.
     </p>
     <p
-      :for={{message, _} <- Keyword.get_values(@changeset.errors, :commands)}
+      :for={{message, _} <- Keyword.get_values(@changeset.errors, :media_items)}
       class="text-sm text-red-600"
     >
       {message}
     </p>
     <div class="space-y-2">
       <label
-        :for={command <- @commands}
+        :for={media_item <- @media_items}
         class="flex items-center gap-3 rounded-lg border border-zinc-200 p-3"
       >
         <input
           type="checkbox"
-          name="media_group[command_ids][]"
-          value={command.id}
-          checked={command.id in @selected_command_ids}
+          name="media_group[media_item_ids][]"
+          value={media_item.id}
+          checked={media_item.id in @selected_media_item_ids}
           class="rounded border-zinc-300"
         />
         <span>
-          <span class="font-medium">{command.name}</span>
-          <span class="ml-2 text-xs text-zinc-500">{command.media_type}</span>
+          <span class="font-medium">{media_item.name}</span>
+          <span class="ml-2 text-xs text-zinc-500">{media_item.media_type}</span>
         </span>
       </label>
     </div>

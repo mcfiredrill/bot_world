@@ -3,7 +3,7 @@ defmodule BotWorld.Accounts.User do
   import Ecto.Changeset
 
   schema "users" do
-    has_many :commands, BotWorld.Command
+    has_many :media_items, BotWorld.MediaItem
     has_many :media_groups, BotWorld.MediaGroup
     has_many :triggers, BotWorld.Trigger
     has_one :twitch_credential, BotWorld.Twitch.Credential

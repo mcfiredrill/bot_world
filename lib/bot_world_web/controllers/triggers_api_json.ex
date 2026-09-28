@@ -1,5 +1,5 @@
 defmodule BotWorldWeb.TriggersAPIJSON do
-  alias BotWorldWeb.CommandsJSON
+  alias BotWorldWeb.MediaJSON
 
   def index(%{triggers: triggers}) do
     %{triggers: Enum.map(triggers, &trigger_data/1)}
@@ -27,7 +27,7 @@ defmodule BotWorldWeb.TriggersAPIJSON do
     %{
       id: media_group.id,
       name: media_group.name,
-      commands: Enum.map(media_group.commands, &CommandsJSON.command/1)
+      media_items: Enum.map(media_group.media_items, &MediaJSON.media_item/1)
     }
   end
 

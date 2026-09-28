@@ -29,7 +29,7 @@
   <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
   <:col :let={trigger} label="Matches">{format_trigger_match(trigger)}</:col>
   <:col :let={trigger} label="Media Group">{trigger.media_group.name}</:col>
-  <:col :let={trigger} label="Clips">{length(trigger.media_group.commands)}</:col>
+  <:col :let={trigger} label="Clips">{length(trigger.media_group.media_items)}</:col>
   <:action :let={trigger}>
     <.link href={~p"/triggers/#{trigger}"}>Show</.link>
   </:action>

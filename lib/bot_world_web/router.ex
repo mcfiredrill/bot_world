@@ -56,16 +56,16 @@ defmodule BotWorldWeb.Router do
   scope "/", BotWorldWeb do
     pipe_through [:browser_auth, :require_authenticated_user]
 
-    get "/", CommandsController, :index
-    get "/commands", CommandsController, :index
+    get "/", MediaController, :index
+    get "/media", MediaController, :index
   end
 
   scope "/", BotWorldWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    get "/commands/:command", CommandsController, :show
-    post "/commands", CommandsController, :create
-    delete "/commands/:command", CommandsController, :delete
+    get "/media/:media_item", MediaController, :show
+    post "/media", MediaController, :create
+    delete "/media/:media_item", MediaController, :delete
 
     post "/triggers/test/bits", TriggersController, :test_bits
     resources "/triggers", TriggersController
@@ -94,9 +94,9 @@ defmodule BotWorldWeb.Router do
   scope "/api", BotWorldWeb do
     pipe_through [:api, :api_session, :require_authenticated_api_user]
 
-    get "/commands", CommandsController, :index
-    post "/commands", CommandsAPIController, :create
-    post "/commands/presign", CommandsAPIController, :presign
+    get "/media", MediaController, :index
+    post "/media", MediaAPIController, :create
+    post "/media/presign", MediaAPIController, :presign
     resources "/triggers", TriggersAPIController, except: [:new, :edit]
   end
 

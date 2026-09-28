@@ -18,9 +18,9 @@
 <% end %>
 
 <br />
-<h2 class="text-xl">Create Command</h2>
+<h2 class="text-xl">Create Media Item</h2>
 
-<.simple_form :let={f} for={@changeset} action={~p"/commands"} multipart>
+<.simple_form :let={f} for={@changeset} action={~p"/media"} multipart>
   <.input field={f[:name]} label="Name" type="text" />
 
   <.input field={f[:aliases]} type="text" label="Aliases (comma‑separated)" />
@@ -35,35 +35,35 @@
   <.input field={f[:media_file]} type="file" label="Media File" />
 
   <:actions>
-    <.button>Save Command</.button>
+    <.button>Save Media Item</.button>
   </:actions>
 </.simple_form>
 
 <hr class="my-6" />
 
-<h2 class="text-xl font-bold mb-4">Uploaded Commands</h2>
+<h2 class="text-xl font-bold mb-4">Uploaded Media</h2>
 
 <div class="overflow-x-auto">
   <table class="w-full text-left text-sm">
     <thead class="border-b border-zinc-200 text-zinc-600">
       <tr>
-        <th class="px-3 py-2 font-semibold">Command</th>
-        <th class="px-3 py-2 font-semibold">Media</th>
+        <th class="px-3 py-2 font-semibold">Media Item</th>
+        <th class="px-3 py-2 font-semibold">Type</th>
         <th class="px-3 py-2 font-semibold">Groups</th>
         <th class="px-3 py-2 font-semibold">Actions</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-zinc-100">
-      <%= for command <- @commands do %>
+      <%= for media_item <- @media_items do %>
         <tr>
-          <td class="px-3 py-3 font-semibold">{command.name}</td>
+          <td class="px-3 py-3 font-semibold">{media_item.name}</td>
           <td class="px-3 py-3">
-            <span class="text-xs text-zinc-500">{command.media_type}</span>
+            <span class="text-xs text-zinc-500">{media_item.media_type}</span>
           </td>
           <td class="px-3 py-3">
-            <span :if={command.media_groups == []} class="text-zinc-400">None</span>
-            <ul :if={command.media_groups != []} class="space-y-1">
-              <li :for={group <- command.media_groups}>
+            <span :if={media_item.media_groups == []} class="text-zinc-400">None</span>
+            <ul :if={media_item.media_groups != []} class="space-y-1">
+              <li :for={group <- media_item.media_groups}>
                 <.link
                   href={~p"/groups/#{group}"}
                   class="font-medium text-blue-500 hover:underline"
@@ -80,17 +80,17 @@
           </td>
           <td class="px-3 py-3 whitespace-nowrap">
             <a
-              href={"http://#{your_s3_host()}/#{command.s3_key}"}
+              href={BotWorld.S3.public_url(media_item.s3_key)}
               class="text-blue-500 hover:underline"
             >
               Download
             </a>
-            · <a href={~p"/commands/#{command}"} class="text-blue-500 hover:underline">Show</a>
+            · <a href={~p"/media/#{media_item}"} class="text-blue-500 hover:underline">Show</a>
             ·
             <.link
-              href={~p"/commands/#{command}"}
+              href={~p"/media/#{media_item}"}
               method="delete"
-              data-confirm={"Delete #{command.name}? This removes it from all media groups."}
+              data-confirm={"Delete #{media_item.name}? This removes it from all media groups."}
               class="text-red-600 hover:underline"
             >
               Delete

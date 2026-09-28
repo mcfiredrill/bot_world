@@ -17,7 +17,7 @@
     </.link>
   </:item>
   <:item title="Media Clips">
-    {Enum.map_join(@trigger.media_group.commands, ", ", & &1.name)}
+    {Enum.map_join(@trigger.media_group.media_items, ", ", & &1.name)}
   </:item>
 </.list>
 

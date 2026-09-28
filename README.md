@@ -27,7 +27,7 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 
 ## Tenant ownership migration
 
-The tenant ownership migration adds required `user_id` columns to commands,
+The tenant ownership migration adds required `user_id` columns to media items,
 media groups, triggers, and media-group memberships. It intentionally does not
 backfill existing rows. Deploy it only against a new or explicitly reset
 database; existing media objects in S3 are not removed by a database reset.

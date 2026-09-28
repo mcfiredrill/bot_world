@@ -1,21 +1,21 @@
 defmodule BotWorldWeb.TriggersControllerTest do
   use BotWorldWeb.ConnCase, async: true
 
-  alias BotWorld.{Command, Commands, MediaGroup, Repo, Trigger}
+  alias BotWorld.{MediaItem, Media, MediaGroup, Repo, Trigger}
 
   setup :register_and_log_in_user
 
   test "POST /triggers/test/bits dispatches an arbitrary bits amount", %{conn: conn, user: user} do
-    command =
-      %Command{user_id: user.id}
-      |> Command.changeset(%{name: "cheer", s3_key: "sfx/cheer.mp3", media_type: "audio"})
+    media_item =
+      %MediaItem{user_id: user.id}
+      |> MediaItem.changeset(%{name: "cheer", s3_key: "sfx/cheer.mp3", media_type: "audio"})
       |> Repo.insert!()
 
     group =
       %MediaGroup{name: "Cheer clips", user_id: user.id}
-      |> Repo.preload(:commands)
+      |> Repo.preload(:media_items)
       |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:commands, [command])
+      |> Ecto.Changeset.put_assoc(:media_items, [media_item])
       |> Repo.insert!()
 
     %Trigger{user_id: user.id}
@@ -27,13 +27,13 @@ defmodule BotWorldWeb.TriggersControllerTest do
     })
     |> Repo.insert!()
 
-    Phoenix.PubSub.subscribe(BotWorld.PubSub, Commands.overlay_topic())
+    Phoenix.PubSub.subscribe(BotWorld.PubSub, Media.overlay_topic())
 
     conn = post(conn, ~p"/triggers/test/bits", %{test_bits: %{bits: "250"}})
 
     assert redirected_to(conn) == ~p"/triggers"
     assert Phoenix.Flash.get(conn.assigns.flash, :info) == "Simulated a 250-bit cheer."
-    assert_receive {:play_command, %{name: "cheer"}}
+    assert_receive {:play_media_item, %{name: "cheer"}}
   end
 
   test "POST /triggers/test/bits rejects invalid amounts", %{conn: conn} do

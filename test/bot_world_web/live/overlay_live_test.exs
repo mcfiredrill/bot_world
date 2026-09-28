@@ -3,17 +3,17 @@ defmodule BotWorldWeb.OverlayLiveTest do
 
   import Phoenix.LiveViewTest
 
-  alias BotWorld.Commands
+  alias BotWorld.Media
 
   defp overlay_token, do: Application.get_env(:bot_world, :overlay)[:token]
 
-  test "plays a command broadcast over pubsub", %{conn: conn} do
+  test "plays a media_item broadcast over pubsub", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/overlay/#{overlay_token()}")
 
     payload = %{media_type: "audio", url: "http://example.com/sfx.mp3", name: "airhorn"}
-    Phoenix.PubSub.broadcast(BotWorld.PubSub, Commands.overlay_topic(), {:play_command, payload})
+    Phoenix.PubSub.broadcast(BotWorld.PubSub, Media.overlay_topic(), {:play_media_item, payload})
 
-    assert_push_event(view, "play_command", ^payload)
+    assert_push_event(view, "play_media_item", ^payload)
   end
 
   test "redirects home when the token is wrong", %{conn: conn} do

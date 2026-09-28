@@ -12,7 +12,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   def create(conn, %{"trigger" => trigger_params}) do
     case Triggers.create_trigger(conn.assigns.current_user, trigger_params) do
       {:ok, trigger} ->
-        trigger = BotWorld.Repo.preload(trigger, media_group: :commands)
+        trigger = BotWorld.Repo.preload(trigger, media_group: :media_items)
 
         conn
         |> put_status(:created)
@@ -35,7 +35,7 @@ defmodule BotWorldWeb.TriggersAPIController do
   end
 
   def show(conn, %{"id" => id}) do
-    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :commands)
+    trigger = Triggers.get_trigger!(conn.assigns.current_user, id, media_group: :media_items)
     render(conn, :show, trigger: trigger)
   end
 
@@ -45,7 +45,7 @@ defmodule BotWorldWeb.TriggersAPIController do
     case trigger
          |> then(&Triggers.update_trigger(conn.assigns.current_user, &1, trigger_params)) do
       {:ok, trigger} ->
-        render(conn, :show, trigger: BotWorld.Repo.preload(trigger, media_group: :commands))
+        render(conn, :show, trigger: BotWorld.Repo.preload(trigger, media_group: :media_items))
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn

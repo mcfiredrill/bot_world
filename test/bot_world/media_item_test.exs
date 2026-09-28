@@ -1,11 +1,15 @@
-defmodule BotWorld.CommandTest do
+defmodule BotWorld.MediaItemTest do
   use ExUnit.Case, async: true
 
-  alias BotWorld.Command
+  alias BotWorld.MediaItem
+
+  test "uses the media_items table while media_item-facing names remain compatible" do
+    assert MediaItem.__schema__(:source) == "media_items"
+  end
 
   test "casts playable media fields" do
     changeset =
-      Command.changeset(%Command{}, %{
+      MediaItem.changeset(%MediaItem{}, %{
         "name" => "airhorn",
         "s3_key" => "sfx/airhorn.mp3",
         "media_type" => "audio"
@@ -17,7 +21,7 @@ defmodule BotWorld.CommandTest do
 
   test "validates the media type" do
     changeset =
-      Command.changeset(%Command{}, %{
+      MediaItem.changeset(%MediaItem{}, %{
         "name" => "airhorn",
         "s3_key" => "sfx/airhorn.mp3",
         "media_type" => "image"

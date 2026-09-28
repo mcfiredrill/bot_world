@@ -8,7 +8,7 @@ defmodule BotWorld.Triggers do
     Trigger
     |> where([t], t.user_id == ^user_id)
     |> order_by([t], asc: t.name)
-    |> preload(media_group: :commands)
+    |> preload(media_group: :media_items)
     |> Repo.all()
   end
 

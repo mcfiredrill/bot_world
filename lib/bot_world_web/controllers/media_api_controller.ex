@@ -1,19 +1,19 @@
-defmodule BotWorldWeb.CommandsAPIController do
+defmodule BotWorldWeb.MediaAPIController do
   use BotWorldWeb, :controller
 
   import Ecto.Changeset
 
-  alias BotWorld.{Command, CommandParams, Commands, S3}
+  alias BotWorld.{MediaItem, MediaItemParams, Media, S3}
   alias BotWorldWeb.ChangesetJSON
 
-  def create(conn, %{"command" => command_params}) do
-    attrs = CommandParams.normalize(command_params)
+  def create(conn, %{"media_item" => media_item_params}) do
+    attrs = MediaItemParams.normalize(media_item_params)
 
-    case Commands.create_command(conn.assigns.current_user, attrs) do
-      {:ok, command} ->
+    case Media.create_media_item(conn.assigns.current_user, attrs) do
+      {:ok, media_item} ->
         conn
         |> put_status(:created)
-        |> render(:show, command: command)
+        |> render(:show, media_item: media_item)
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
@@ -27,7 +27,7 @@ defmodule BotWorldWeb.CommandsAPIController do
     |> put_status(:unprocessable_entity)
     |> json(
       ChangesetJSON.errors(
-        Commands.change_command(%Command{user_id: conn.assigns.current_user.id}, %{})
+        Media.change_media_item(%MediaItem{user_id: conn.assigns.current_user.id}, %{})
       )
     )
   end
@@ -39,7 +39,7 @@ defmodule BotWorldWeb.CommandsAPIController do
       %{filename: filename, content_type: content_type, media_type: media_type} =
         apply_changes(changeset)
 
-      s3_key = CommandParams.build_s3_key(conn.assigns.current_user.id, media_type, filename)
+      s3_key = MediaItemParams.build_s3_key(conn.assigns.current_user.id, media_type, filename)
 
       case S3.presign_upload(s3_key, content_type) do
         {:ok, upload} ->

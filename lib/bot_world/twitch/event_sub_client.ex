@@ -1,12 +1,12 @@
 defmodule BotWorld.Twitch.EventSubClient do
   @moduledoc """
   Maintains the Twitch EventSub WebSocket connection, creates subscriptions
-  on session_welcome, and dispatches notifications to `BotWorld.Commands`.
+  on session_welcome, and dispatches notifications to `BotWorld.Media`.
   """
 
   use WebSockex
   require Logger
-  alias BotWorld.Commands
+  alias BotWorld.Media
   alias BotWorld.Twitch.Helix
 
   @eventsub_url "wss://eventsub.wss.twitch.tv/ws"
@@ -100,7 +100,7 @@ defmodule BotWorld.Twitch.EventSubClient do
          state
        ) do
     Logger.info("Twitch EventSub notification: #{subscription_type} #{inspect(event)}")
-    Commands.dispatch_event(state.config.user_id, subscription_type, event)
+    Media.dispatch_event(state.config.user_id, subscription_type, event)
     {:ok, state}
   end
 
