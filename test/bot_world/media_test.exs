@@ -45,54 +45,6 @@ defmodule BotWorld.MediaTest do
     end
   end
 
-  describe "random_media_item_for_trigger_type/1" do
-    test "returns a media_item whose trigger matches the given type", %{user: user} do
-      media_item =
-        insert_media_item(user, %{
-          "name" => "airhorn",
-          "s3_key" => "sfx/airhorn.mp3",
-          "media_type" => "audio",
-          "triggers" => [%{"name" => "Follow", "type" => "twitch_follow"}]
-        })
-
-      assert {:ok, matched} = Media.random_media_item_for_trigger_type(user, "twitch_follow")
-      assert matched.id == media_item.id
-    end
-
-    test "returns an error when no media item matches", %{user: user} do
-      assert {:error, :no_media_item} =
-               Media.random_media_item_for_trigger_type(user, "twitch_bits")
-    end
-
-    test "randomly selects among all clips in the trigger's media group", %{user: user} do
-      first = insert_media_item(user, %{"name" => "first", "s3_key" => "sfx/first.mp3"})
-      second = insert_media_item(user, %{"name" => "second", "s3_key" => "sfx/second.mp3"})
-
-      group =
-        %MediaGroup{name: "Random group", user_id: user.id}
-        |> Repo.preload(:media_items)
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:media_items, [first, second])
-        |> Repo.insert!()
-
-      %Trigger{user_id: user.id}
-      |> Trigger.changeset(%{
-        "name" => "Follow",
-        "type" => "twitch_follow",
-        "media_group_id" => group.id
-      })
-      |> Repo.insert!()
-
-      selected_ids =
-        for _ <- 1..40, into: MapSet.new() do
-          {:ok, media_item} = Media.random_media_item_for_trigger_type(user, "twitch_follow")
-          media_item.id
-        end
-
-      assert selected_ids == MapSet.new([first.id, second.id])
-    end
-  end
-
   describe "dispatch_event/2" do
     test "plays a directly targeted media item", %{user: user} do
       media_item =

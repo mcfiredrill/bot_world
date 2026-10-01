@@ -53,19 +53,6 @@ defmodule BotWorld.Media do
     |> Repo.delete()
   end
 
-  def random_media_item_for_trigger_type(%User{id: user_id}, type) do
-    Trigger
-    |> where([t], t.user_id == ^user_id and t.type == ^type)
-    |> join(:inner, [t], g in assoc(t, :media_group))
-    |> join(:inner, [_t, g], c in assoc(g, :media_items))
-    |> select([_t, _g, c], c)
-    |> Repo.all()
-    |> case do
-      [] -> {:error, :no_media_item}
-      media_items -> {:ok, Enum.random(media_items)}
-    end
-  end
-
   def dispatch_event(user_or_id, eventsub_type, event_payload) do
     user_id = user_id(user_or_id)
 
