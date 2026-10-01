@@ -23,6 +23,32 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {Hooks} from "./overlay_hooks"
 
+document.addEventListener("change", event => {
+  const input = event.target
+  if (!input.matches('input[type="file"][data-media-type-selector]')) return
+
+  const file = input.files[0]
+  if (!file) return
+
+  let mediaType = file.type.split("/")[0]
+  if (mediaType !== "audio" && mediaType !== "video") {
+    const extension = file.name.split(".").pop().toLowerCase()
+    if (["mp3", "wav", "ogg", "oga", "flac", "aac", "m4a", "aif", "aiff", "opus", "wma"].includes(extension)) {
+      mediaType = "audio"
+    } else if (["mp4", "webm", "mov", "m4v", "avi", "mkv", "ogv", "mpeg", "mpg", "wmv"].includes(extension)) {
+      mediaType = "video"
+    } else {
+      return
+    }
+  }
+
+  const selector = document.getElementById(input.dataset.mediaTypeSelector)
+  if (selector) {
+    selector.value = mediaType
+    selector.dispatchEvent(new Event("change", {bubbles: true}))
+  }
+})
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
@@ -43,4 +69,3 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-

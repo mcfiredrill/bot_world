@@ -32,7 +32,12 @@
     options={[{"Audio", "audio"}, {"Video", "video"}]}
   />
 
-  <.input field={f[:media_file]} type="file" label="Media File" />
+  <.input
+    field={f[:media_file]}
+    type="file"
+    label="Media File"
+    data-media-type-selector={f[:media_type].id}
+  />
 
   <:actions>
     <.button>Save Media Item</.button>
