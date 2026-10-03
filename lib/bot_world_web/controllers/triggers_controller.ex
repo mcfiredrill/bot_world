@@ -18,6 +18,26 @@ defmodule BotWorldWeb.TriggersController do
     )
   end
 
+  def bits_rewards(conn, _params) do
+    rewards =
+      conn.assigns.current_user
+      |> Triggers.list_triggers()
+      |> Enum.filter(&(&1.type == "twitch_bits"))
+      |> Enum.sort_by(&{is_nil(&1.bits_amount), &1.bits_amount, &1.name})
+
+    rewards_text =
+      Enum.map_join(rewards, "\n", fn reward ->
+        amount =
+          if is_nil(reward.bits_amount),
+            do: "Other Bits amounts",
+            else: "#{reward.bits_amount} Bits"
+
+        "- #{amount}: #{reward.name}"
+      end)
+
+    render(conn, :bits_rewards, rewards: rewards, rewards_text: rewards_text)
+  end
+
   def create(conn, %{"trigger" => trigger_params}) do
     case Triggers.create_trigger(conn.assigns.current_user, trigger_params) do
       {:ok, _trigger} ->

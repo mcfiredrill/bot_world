@@ -23,6 +23,21 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {Hooks} from "./overlay_hooks"
 
+document.addEventListener("click", async event => {
+  if (!event.target.closest("[data-copy-bits-rewards]")) return
+
+  const text = document.getElementById("bits-rewards-text")
+  const status = document.getElementById("bits-rewards-copy-status")
+  try {
+    await navigator.clipboard.writeText(text.value)
+    status.textContent = "Copied! Paste this into your Twitch About page."
+  } catch {
+    text.focus()
+    text.select()
+    status.textContent = "Text selected. Press Ctrl+C or Command+C to copy."
+  }
+})
+
 document.addEventListener("change", event => {
   const input = event.target
   if (!input.matches('input[type="file"][data-media-type-selector]')) return

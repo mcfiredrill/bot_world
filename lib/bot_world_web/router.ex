@@ -67,6 +67,7 @@ defmodule BotWorldWeb.Router do
     post "/media", MediaController, :create
     delete "/media/:media_item", MediaController, :delete
 
+    get "/triggers/bits-rewards", TriggersController, :bits_rewards
     post "/triggers/test/bits", TriggersController, :test_bits
     resources "/triggers", TriggersController
     resources "/groups", MediaGroupsController
