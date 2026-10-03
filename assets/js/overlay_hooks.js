@@ -2,29 +2,46 @@ export const Hooks = {
   OverlayPlayback: {
     mounted() {
       this.mediaEl = null
+      this.queue = []
 
       this.handleEvent("play_media_item", payload => {
-        console.log("got play_media_item event: ", payload);
-        const tag = payload.media_type === "video" ? "video" : "audio"
-
-        if (!this.mediaEl || this.mediaEl.tagName.toLowerCase() !== tag) {
-          if (this.mediaEl) this.mediaEl.remove()
-          this.mediaEl = document.createElement(tag)
-          this.mediaEl.autoplay = true
-          this.mediaEl.playsInline = true
-          this.mediaEl.addEventListener("ended", event => {
-            if (this.mediaEl === event.currentTarget) {
-              this.mediaEl.remove()
-              this.mediaEl = null
-            }
-          })
-          this.el.appendChild(this.mediaEl)
-        }
-
-        this.mediaEl.src = payload.url
-        this.mediaEl.load()
-        this.mediaEl.play().catch(() => {})
+        console.log('got play media item')
+        console.log(payload)
+        this.queue.push(payload)
+        this.playNext()
       })
+    },
+
+    playNext() {
+      if (this.mediaEl || this.queue.length === 0) return
+
+      const payload = this.queue.shift()
+      const media = document.createElement(payload.media_type === "video" ? "video" : "audio")
+      this.mediaEl = media
+      media.playsInline = true
+
+      const finish = () => {
+        if (this.mediaEl !== media) return
+        media.remove()
+        this.mediaEl = null
+        this.playNext()
+      }
+
+      media.addEventListener("ended", finish, {once: true})
+      media.addEventListener("error", finish, {once: true})
+      media.src = payload.url
+      this.el.appendChild(media)
+      media.play().catch(finish)
+    },
+
+    destroyed() {
+      this.queue = []
+      const media = this.mediaEl
+      this.mediaEl = null
+      if (media) {
+        media.pause()
+        media.remove()
+      }
     }
   }
 }
