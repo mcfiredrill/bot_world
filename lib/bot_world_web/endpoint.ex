@@ -42,7 +42,7 @@ defmodule BotWorldWeb.Endpoint do
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
+    parsers: [:urlencoded, {:multipart, length: 100 * 1024 * 1024}, :json],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
 
