@@ -84,18 +84,25 @@ defmodule BotWorld.Twitch do
   """
   def fresh_access_token(%Credential{} = credential, request_fun \\ &default_request/1) do
     if expiring_soon?(credential) do
-      with {:ok, token} <- refresh_token(credential.refresh_token, request_fun),
-           {:ok, credential} <-
-             credential
-             |> Credential.changeset(%{
-               access_token: token["access_token"],
-               refresh_token: token["refresh_token"] || credential.refresh_token,
-               expires_at: expires_at_from(token["expires_in"])
-             })
-             |> Repo.update() do
-        {:ok, credential.access_token}
-      end
+      refresh_access_token(credential, request_fun)
     else
+      {:ok, credential.access_token}
+    end
+  end
+
+  @doc """
+  Refreshes a token even when its stored expiry has not elapsed (for HTTP 401).
+  """
+  def refresh_access_token(%Credential{} = credential, request_fun \\ &default_request/1) do
+    with {:ok, token} <- refresh_token(credential.refresh_token, request_fun),
+         {:ok, credential} <-
+           credential
+           |> Credential.changeset(%{
+             access_token: token["access_token"],
+             refresh_token: token["refresh_token"] || credential.refresh_token,
+             expires_at: expires_at_from(token["expires_in"])
+           })
+           |> Repo.update() do
       {:ok, credential.access_token}
     end
   end

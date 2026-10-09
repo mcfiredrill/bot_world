@@ -103,6 +103,97 @@ defmodule BotWorld.TwitchTest do
              {:via, Registry, {BotWorld.Twitch.ClientRegistry, 2}}
   end
 
+  test "EventSub reloads credentials on welcome and refreshes once after a 401" do
+    assert {:ok, %{user: user}} =
+             Twitch.authenticate("first-code", twitch_request_fun("42", "streamer"))
+
+    request_fun = fn request ->
+      case request.path do
+        "/oauth2/token" ->
+          assert URI.decode_query(request.body)["grant_type"] == "refresh_token"
+          send(self(), :refreshed)
+          token_response("fresh-token")
+
+        "/helix/eventsub/subscriptions" ->
+          cond do
+            {"authorization", "Bearer access-token"} in request.headers ->
+              {:ok, %Finch.Response{status: 401, body: "invalid token"}}
+
+            {"authorization", "Bearer fresh-token"} in request.headers ->
+              send(self(), {:subscribed, Jason.decode!(request.body)["type"]})
+              {:ok, %Finch.Response{status: 202, body: ~s({"data":[]})}}
+          end
+      end
+    end
+
+    state = %{
+      config: %{user_id: user.id, oauth_token: "stale-in-memory-token"},
+      session_id: nil,
+      reconnect_attempts: 4,
+      request_fun: request_fun
+    }
+
+    assert {:ok, new_state} = EventSubClient.handle_frame(welcome_frame(), state)
+    assert new_state.config.oauth_token == "fresh-token"
+    assert new_state.reconnect_attempts == 0
+    assert Twitch.get_credential(user).access_token == "fresh-token"
+    assert_received :refreshed
+    refute_received :refreshed
+
+    for {type, _, _} <- BotWorld.Twitch.Helix.event_specs() do
+      assert_received {:subscribed, ^type}
+    end
+  end
+
+  test "EventSub stops subscribing when the refreshed token is still rejected" do
+    assert {:ok, %{user: user}} =
+             Twitch.authenticate("first-code", twitch_request_fun("42", "streamer"))
+
+    request_fun = fn request ->
+      case request.path do
+        "/oauth2/token" ->
+          send(self(), :refreshed)
+          token_response("fresh-token")
+
+        "/helix/eventsub/subscriptions" ->
+          send(self(), :subscription_attempt)
+          {:ok, %Finch.Response{status: 401, body: "invalid token"}}
+      end
+    end
+
+    state = %{
+      config: %{user_id: user.id},
+      session_id: nil,
+      reconnect_attempts: 0,
+      request_fun: request_fun
+    }
+
+    assert {:close, new_state} = EventSubClient.handle_frame(welcome_frame(), state)
+    assert new_state.reconnect_attempts == 6
+    assert_received :refreshed
+    refute_received :refreshed
+    assert_received :subscription_attempt
+    assert_received :subscription_attempt
+    refute_received :subscription_attempt
+  end
+
+  test "reconnect delays grow, are capped, and give rate limiting a cooldown" do
+    assert EventSubClient.reconnect_delay(0, :closed) == 1_000
+    assert EventSubClient.reconnect_delay(3, :closed) == 8_000
+    assert EventSubClient.reconnect_delay(100, :closed) == 60_000
+    rate_limit = %WebSockex.RequestError{code: 429, message: "Too Many Requests"}
+    assert EventSubClient.reconnect_delay(0, rate_limit) == 30_000
+    assert EventSubClient.reconnect_delay(1, rate_limit) == 60_000
+  end
+
+  defp welcome_frame do
+    {:text,
+     Jason.encode!(%{
+       metadata: %{message_type: "session_welcome"},
+       payload: %{session: %{id: "new-session"}}
+     })}
+  end
+
   defp twitch_request_fun(twitch_user_id, twitch_login, access_token \\ "access-token") do
     fn request ->
       case request.path do
