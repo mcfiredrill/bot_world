@@ -5,6 +5,49 @@ defmodule BotWorldWeb.TriggersControllerTest do
 
   setup :register_and_log_in_user
 
+  test "GET /triggers sorts each column in both directions", %{conn: conn, user: user} do
+    for {name, type, amount, target} <- [
+          {"alpha", "twitch_bits", 100, "Zebra"},
+          {"Beta", "twitch_bits", 20, "Apple"},
+          {"Gamma", "twitch_follow", nil, "Mango"}
+        ] do
+      item = Repo.insert!(%MediaItem{user_id: user.id, name: target, s3_key: "clip.mp3"})
+
+      %Trigger{user_id: user.id}
+      |> Trigger.changeset(%{name: name, type: type, bits_amount: amount, media_item_id: item.id})
+      |> Repo.insert!()
+    end
+
+    for {column, ascending} <- [
+          {"name", ["alpha", "Beta", "Gamma"]},
+          {"type", ["alpha", "Beta", "Gamma"]},
+          {"matches", ["Beta", "alpha", "Gamma"]},
+          {"target", ["Beta", "Gamma", "alpha"]}
+        ],
+        direction <- ["asc", "desc"] do
+      document =
+        conn
+        |> get(~p"/triggers?sort=#{column}&direction=#{direction}")
+        |> html_response(200)
+        |> Floki.parse_document!()
+
+      names = document |> Floki.find("#triggers tr td:first-child") |> Enum.map(&Floki.text/1)
+
+      assert Enum.map(names, &String.trim/1) ==
+               if(direction == "asc", do: ascending, else: Enum.reverse(ascending))
+
+      aria_sort = if direction == "asc", do: "ascending", else: "descending"
+      next_direction = if direction == "asc", do: "desc", else: "asc"
+      link = Floki.find(document, "th[aria-sort='#{aria_sort}'] a")
+
+      assert Floki.attribute(link, "href") ==
+               ["/triggers?sort=#{column}&direction=#{next_direction}"]
+    end
+
+    document = conn |> get(~p"/triggers?sort=invalid&direction=invalid") |> html_response(200)
+    assert document =~ ~s(aria-sort="ascending")
+  end
+
   test "GET /triggers/bits-rewards lists only the user's bits rewards in amount order", %{
     conn: conn,
     user: user

@@ -28,10 +28,36 @@
 </section>
 
 <.table id="triggers" rows={@triggers}>
-  <:col :let={trigger} label="Name">{trigger.name}</:col>
-  <:col :let={trigger} label="Type">{format_trigger_type(trigger.type)}</:col>
-  <:col :let={trigger} label="Matches">{format_trigger_match(trigger)}</:col>
-  <:col :let={trigger} label="Target">
+  <:col
+    :let={trigger}
+    label="Name"
+    sort_href={sort_link("name", @sort, @direction)}
+    sort_direction={sort_direction("name", @sort, @direction)}
+  >
+    {trigger.name}
+  </:col>
+  <:col
+    :let={trigger}
+    label="Type"
+    sort_href={sort_link("type", @sort, @direction)}
+    sort_direction={sort_direction("type", @sort, @direction)}
+  >
+    {format_trigger_type(trigger.type)}
+  </:col>
+  <:col
+    :let={trigger}
+    label="Matches"
+    sort_href={sort_link("matches", @sort, @direction)}
+    sort_direction={sort_direction("matches", @sort, @direction)}
+  >
+    {format_trigger_match(trigger)}
+  </:col>
+  <:col
+    :let={trigger}
+    label="Target"
+    sort_href={sort_link("target", @sort, @direction)}
+    sort_direction={sort_direction("target", @sort, @direction)}
+  >
     <%= if trigger.media_item do %>
       Media item: {trigger.media_item.name}
     <% else %>

@@ -2,9 +2,16 @@ defmodule BotWorldWeb.TriggersController do
   use BotWorldWeb, :controller
   alias BotWorld.{Media, Trigger, Triggers}
 
-  def index(conn, _params) do
-    triggers = Triggers.list_triggers(conn.assigns.current_user)
-    render(conn, :index, triggers: triggers)
+  def index(conn, params) do
+    sort = if params["sort"] in ~w(name type matches target), do: params["sort"], else: "name"
+    direction = if params["direction"] == "desc", do: :desc, else: :asc
+
+    triggers =
+      conn.assigns.current_user
+      |> Triggers.list_triggers()
+      |> Enum.sort_by(&{trigger_sort_value(&1, sort), String.downcase(&1.name), &1.id}, direction)
+
+    render(conn, :index, triggers: triggers, sort: sort, direction: direction)
   end
 
   def new(conn, _params) do
@@ -127,6 +134,21 @@ defmodule BotWorldWeb.TriggersController do
     conn
     |> put_flash(:error, "Bits must be a non-negative whole number.")
     |> redirect(to: ~p"/triggers")
+  end
+
+  defp trigger_sort_value(trigger, "name"), do: String.downcase(trigger.name)
+  defp trigger_sort_value(trigger, "type"), do: trigger.type
+
+  defp trigger_sort_value(%{type: "twitch_bits"} = trigger, "matches"),
+    do: {"bits", is_nil(trigger.bits_amount), trigger.bits_amount}
+
+  defp trigger_sort_value(trigger, "matches"),
+    do: {"text", String.downcase(BotWorldWeb.TriggersHTML.format_trigger_match(trigger))}
+
+  defp trigger_sort_value(trigger, "target") do
+    if trigger.media_item,
+      do: {"media item", String.downcase(trigger.media_item.name)},
+      else: {"group", String.downcase(trigger.media_group.name)}
   end
 
   defp media_groups(conn), do: Triggers.list_media_groups(conn.assigns.current_user)

@@ -3,6 +3,15 @@ defmodule BotWorldWeb.TriggersHTML do
 
   embed_templates "triggers_html/*"
 
+  def sort_link(column, sort, direction) do
+    next_direction = if column == sort and direction == :asc, do: "desc", else: "asc"
+    ~p"/triggers?sort=#{column}&direction=#{next_direction}"
+  end
+
+  def sort_direction(column, sort, direction) do
+    if column == sort, do: if(direction == :asc, do: "ascending", else: "descending")
+  end
+
   @doc """
   Formats trigger type for display.
   """
